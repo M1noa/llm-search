@@ -259,6 +259,11 @@ export const SEARCH_PROVIDERS: Record<SearchProvider, ProviderConfig> = {
     name: "Ecosia",
     experimental: true,
   },
+  [SearchProvider.SearXNG]: {
+    enabled: true,
+    name: "SearXNG",
+    experimental: false,
+  },
 };
 
 // Provider status configuration notes:
@@ -267,6 +272,8 @@ export const SEARCH_PROVIDERS: Record<SearchProvider, ProviderConfig> = {
 // - DuckDuckGo: Rate limited but functional
 // - Ecosia: Disabled by default due to strict bot detection (403 errors)
 //   Would require browser automation (e.g. Puppeteer) to work reliably
+// - SearXNG: Metasearch engine with JSON API, requires baseUrl configuration
+//   Public instances available at https://searx.space/
 
 // DuckDuckGo search helper
 async function searchDuckDuckGo(
@@ -355,6 +362,7 @@ const RATE_LIMITS = {
   brave: 1000, // 1 second between searches
   duckduckgo: 5000, // 5 seconds between searches (DDG is very strict)
   ecosia: 1000, // 1 second between searches
+  searxng: 500, // 0.5 seconds between searches
 };
 
 const lastSearchTimes = {
@@ -362,6 +370,7 @@ const lastSearchTimes = {
   brave: 0,
   duckduckgo: 0,
   ecosia: 0,
+  searxng: 0,
 };
 
 // Cache for search results
@@ -390,6 +399,82 @@ async function enforceRateLimit(provider: SearchOptions["provider"]) {
   }
 
   lastSearchTimes[providerName] = Date.now();
+}
+
+// SearXNG search helper
+async function searchSearXNG(
+  query: string,
+  options: SearchOptions = {}
+): Promise<SearchResult[]> {
+  if (!options.searxngConfig?.baseUrl) {
+    throw new Error("SearXNG base URL is required in searxngConfig.baseUrl");
+  }
+
+  const params = new URLSearchParams({
+    q: query,
+    format: "json",
+    safesearch: options.safeSearch ? "2" : "0",
+    ...(options.limit && { pageno: "1" }),
+  });
+
+  const searchUrl = `${options.searxngConfig.baseUrl.replace(/\/$/, "")}/search?${params.toString()}`;
+  console.log("\nSearXNG Search:");
+  console.log("URL:", searchUrl);
+
+  try {
+    const headers: Record<string, string> = {
+      "User-Agent": "llm-search/1.0.0",
+      "Accept": "application/json",
+    };
+
+    if (options.searxngConfig.apiKey) {
+      headers["Authorization"] = `Bearer ${options.searxngConfig.apiKey}`;
+    }
+
+    console.log("Fetching SearXNG results...");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), options.timeout || 10000);
+    
+    const response = await fetch(searchUrl, {
+      method: "GET",
+      headers,
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`SearXNG API returned ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log(`✅ Got SearXNG response with ${data.results?.length || 0} results`);
+
+    if (!data.results || !Array.isArray(data.results)) {
+      return [];
+    }
+
+    const results: SearchResult[] = data.results
+      .filter((item: any) => item.title && item.url)
+      .map((item: any) => ({
+        title: item.title,
+        url: item.url,
+        snippet: item.content || item.description || undefined,
+        source: SearchProvider.SearXNG,
+      }))
+      .slice(0, options.limit || 10);
+
+    console.log(`✅ Parsed ${results.length} valid SearXNG results`);
+    return results;
+  } catch (error) {
+    throw {
+      message: `SearXNG search failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      code: "SEARXNG_SEARCH_ERROR",
+      originalError: error,
+    } as SearchError;
+  }
 }
 
 // Helper function to get cache key
@@ -446,6 +531,10 @@ export async function search(
 
       case "ecosia":
         results = await searchEcosia(query, opts);
+        break;
+
+      case "searxng":
+        results = await searchSearXNG(query, opts);
         break;
 
       default: // google

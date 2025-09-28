@@ -4,7 +4,8 @@ export const enum SearchProvider {
   Google = 'google',
   Brave = 'brave',
   DuckDuckGo = 'duckduckgo',
-  Ecosia = 'ecosia'
+  Ecosia = 'ecosia',
+  SearXNG = 'searxng'
 }
 
 export interface ProviderConfig {
@@ -18,6 +19,10 @@ export interface SearchOptions {
   safeSearch?: boolean;
   timeout?: number;
   provider?: SearchProvider;
+  searxngConfig?: {
+    baseUrl: string;
+    apiKey?: string;
+  };
 }
 
 // Base interface for all types of results

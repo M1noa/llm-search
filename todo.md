@@ -38,6 +38,10 @@ todo list of what i need to add or do with this project
 
 - [ ] github search & repo & user info
 
-- [ ] model handling for thinking, searching, etc inside the module
+- [ ] model handling for sequential thinking, searching, etc inside the module
 
 - [ ] model api support so people can just give their api key and model n stuff and the module does all the requesting
+
+- [ ] search stuff from https://github.com/chatboxai/chatbox/tree/main/src/renderer/packages/web-search like bing and ddg and bing news
+
+- [ ] copy ideas from https://github.com/modelcontextprotocol/servers/tree/main/src
