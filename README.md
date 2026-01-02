@@ -7,6 +7,10 @@
 ## Features
 
 - Search multiple engines (Google, DuckDuckGo, SearxNG)
+- **Autocomplete/Suggestions** (Google, DuckDuckGo, Brave, etc.)
+- **Website Crawling** (Multi-page extraction with Cheerio/Puppeteer)
+- **Flight Search** (Google Flights)
+- **Event Search** (Google Events)
 - News search (Google News, DuckDuckGo)
 - Finance data (Yahoo Finance)
 - Wikipedia search and content extraction
@@ -31,11 +35,27 @@ npm install tesseract.js-data
 ## Quick Start
 
 ```typescript
-import { search, parse, searchNews, searchMedia, getQuote } from "llm-kit";
+import {
+  search,
+  parse,
+  searchNews,
+  searchMedia,
+  getQuote,
+  getSuggestions,
+  crawl,
+} from "llm-kit";
 
 // Web Search
 const results = await search("typescript tutorial");
 console.log(results);
+
+// Autocomplete
+const suggestions = await getSuggestions("react");
+console.log(suggestions.suggestions);
+
+// Crawl Website
+const pages = await crawl("https://example.com", { maxDepth: 1 });
+console.log(pages[0].textContent);
 
 // News Search
 const news = await searchNews("technology trends");
@@ -88,6 +108,10 @@ console.log(imageResult.text);
 See the [docs](./docs) directory for detailed documentation:
 
 - [Search](./docs/search.md) - Web search capabilities
+- [Autocomplete](./docs/autocomplete.md) - Search suggestions
+- [Crawling](./docs/crawling.md) - Website crawling
+- [Flights](./docs/flights.md) - Flight search
+- [Events](./docs/events.md) - Event search
 - [Media](./docs/media.md) - Media search (Movies, TV, Anime)
 - [News](./docs/news.md) - News search capabilities
 - [Finance](./docs/finance.md) - Finance data capabilities
@@ -119,6 +143,39 @@ console.log(movies);
 // Search for anime (uses AniDB)
 const anime = await searchMedia("Cowboy Bebop", { type: "anime" });
 console.log(anime);
+```
+
+### Autocomplete & Crawling
+
+```typescript
+import { getSuggestions, crawl } from "llm-kit";
+
+// Get search suggestions
+const suggestions = await getSuggestions("best javascript framework");
+console.log(suggestions.suggestions);
+
+// Crawl a website
+const pages = await crawl("https://example.com", {
+  maxDepth: 2,
+  maxPages: 10,
+});
+console.log(`Crawled ${pages.length} pages`);
+```
+
+### Specialized Search
+
+```typescript
+import { searchFlights, searchEvents } from "llm-kit";
+
+// Find flights
+const flights = await searchFlights({
+  from: "JFK",
+  to: "LHR",
+  departureDate: "2025-06-01",
+});
+
+// Find events
+const events = await searchEvents("tech conferences in San Francisco");
 ```
 
 ### Document Parsing
