@@ -11,15 +11,7 @@ import { XMLParser } from "fast-xml-parser";
 import { SearchError } from "../types";
 
 // supported file types
-export type FileType =
-  | "pdf"
-  | "docx"
-  | "csv"
-  | "image"
-  | "text"
-  | "xml"
-  | "json"
-  | "unknown";
+export type FileType = "pdf" | "docx" | "csv" | "image" | "text" | "xml" | "json" | "unknown";
 
 export interface ParseOptions {
   language?: string; // Language for OCR (default: 'eng')
@@ -36,8 +28,8 @@ export interface ParseOptions {
 export interface ParseResult {
   type: FileType;
   text: string;
-  metadata?: any;
-  data?: any; // Structured data if available
+  metadata?: Record<string, unknown>;
+  data?: unknown; // Structured data if available
 }
 
 // detect file type from path or buffer
@@ -47,52 +39,58 @@ function detectFileType(pathOrBuffer: string | Buffer, filename?: string): FileT
     const ext = extname(pathOrBuffer).toLowerCase();
     return getTypeFromExtension(ext);
   }
-  
+
   // if we got a filename hint with the buffer, use that
   if (filename) {
     const ext = extname(filename).toLowerCase();
     return getTypeFromExtension(ext);
   }
-  
+
   // ok fine we'll try to detect from buffer magic numbers
-  const header = pathOrBuffer.slice(0, 4).toString('hex');
-  
+  const header = pathOrBuffer.slice(0, 4).toString("hex");
+
   // check magic numbers
-  if (header.startsWith('89504e47')) return 'image'; // PNG
-  if (header.startsWith('ffd8')) return 'image';     // JPEG
-  if (header.startsWith('424d')) return 'image';     // BMP
-  if (header.startsWith('47494638')) return 'image'; // GIF
-  if (header.startsWith('25504446')) return 'pdf';   // PDF
-  if (header.startsWith('504b')) return 'docx';      // ZIP/DOCX
-  if (pathOrBuffer.slice(0, 5).toString() === '<?xml') return 'xml';
-  
+  if (header.startsWith("89504e47")) return "image"; // PNG
+  if (header.startsWith("ffd8")) return "image"; // JPEG
+  if (header.startsWith("424d")) return "image"; // BMP
+  if (header.startsWith("47494638")) return "image"; // GIF
+  if (header.startsWith("25504446")) return "pdf"; // PDF
+  if (header.startsWith("504b")) return "docx"; // ZIP/DOCX
+  if (pathOrBuffer.slice(0, 5).toString() === "<?xml") return "xml";
+
   // attempt json detection
   try {
     JSON.parse(pathOrBuffer.toString());
-    return 'json';
+    return "json";
   } catch {
     // not json, continue
   }
-  
+
   // check if it looks like csv
-  const firstLine = pathOrBuffer.toString().split('\n')[0];
-  if (firstLine && firstLine.includes(',')) return 'csv';
-  
+  const firstLine = pathOrBuffer.toString().split("\n")[0];
+  if (firstLine && firstLine.includes(",")) return "csv";
+
   // probably just text if we got here
-  if (pathOrBuffer.toString().trim()) return 'text';
-  
+  if (pathOrBuffer.toString().trim()) return "text";
+
   return "unknown";
 }
 
 // helper to get type from file extension
 function getTypeFromExtension(ext: string): FileType {
   switch (ext) {
-    case ".pdf": return "pdf";
-    case ".docx": return "docx";
-    case ".csv": return "csv";
-    case ".txt": return "text";
-    case ".xml": return "xml";
-    case ".json": return "json";
+    case ".pdf":
+      return "pdf";
+    case ".docx":
+      return "docx";
+    case ".csv":
+      return "csv";
+    case ".txt":
+      return "text";
+    case ".xml":
+      return "xml";
+    case ".json":
+      return "json";
     case ".png":
     case ".jpg":
     case ".jpeg":
@@ -170,10 +168,7 @@ function parseCSV(buffer: Buffer, options?: ParseOptions): ParseResult {
       skip_empty_lines: true,
     });
 
-    const headers =
-      options?.csv?.columns !== false
-        ? Object.keys(records[0] || {})
-        : undefined;
+    const headers = options?.csv?.columns !== false ? Object.keys(records[0] || {}) : undefined;
 
     return {
       type: "csv",
@@ -209,11 +204,7 @@ function htmlToText(html: string): string {
 }
 
 // Helper function to create temp file
-async function withTempFile<T>(
-  buffer: Buffer,
-  extension: string,
-  callback: (path: string) => Promise<T>
-): Promise<T> {
+async function withTempFile<T>(buffer: Buffer, extension: string, callback: (path: string) => Promise<T>): Promise<T> {
   const tempFileName = `temp-${randomBytes(16).toString("hex")}${extension}`;
   const tempPath = join(tmpdir(), tempFileName);
 
@@ -330,10 +321,7 @@ function parseXML(buffer: Buffer, options?: ParseOptions): ParseResult {
 }
 
 // parse images using OCR
-async function parseImage(
-  buffer: Buffer,
-  options?: ParseOptions
-): Promise<ParseResult> {
+async function parseImage(buffer: Buffer, options?: ParseOptions): Promise<ParseResult> {
   try {
     const worker = await createWorker();
     const lang = options?.language || "eng";
@@ -364,14 +352,11 @@ async function parseImage(
 export async function parse(
   pathOrBuffer: string | Buffer,
   options: ParseOptions = {},
-  filename?: string // optional filename hint for buffer inputs
+  filename?: string, // optional filename hint for buffer inputs
 ): Promise<ParseResult> {
   try {
     // Get file buffer
-    const buffer =
-      typeof pathOrBuffer === "string"
-        ? readFileSync(pathOrBuffer)
-        : pathOrBuffer;
+    const buffer = typeof pathOrBuffer === "string" ? readFileSync(pathOrBuffer) : pathOrBuffer;
 
     // Detect file type (pass filename hint if we have it)
     const fileType = detectFileType(pathOrBuffer, filename);
@@ -401,9 +386,7 @@ export async function parse(
       throw searchError;
     }
     throw {
-      message: `Failed to parse file: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
+      message: `Failed to parse file: ${error instanceof Error ? error.message : String(error)}`,
       code: "PARSE_ERROR",
       originalError: error,
     } as SearchError;

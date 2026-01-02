@@ -1,13 +1,14 @@
 {
-  "name": "llm-search",
-  "version": "1.0.4",
+  "name": "llm-kit",
+  "version": "1.1.0",
   "description": "A Node.js module for searching and scraping web content, designed for LLMs but useful for any project where webscraping is needed!",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "test": "ts-node src/test.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint src/**/*.ts",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run test && npm run build"
@@ -35,39 +36,51 @@
   ],
   "author": {
     "name": "Minoa",
-    "url": "https://github.com/M1noa"
+    "url": "https://gitlab.com/M1noa"
   },
   "license": "MIT",
   "dependencies": {
+    "@crawlee/cheerio": "^3.15.3",
+    "@crawlee/puppeteer": "^3.15.3",
     "@mozilla/readability": "^0.6.0",
-    "csv-parse": "^5.6.0",
-    "duck-duck-scrape": "^2.2.7",
-    "fast-xml-parser": "^5.2.1",
-    "google-sr": "^5.0.0",
-    "jsdom": "^24.0.0",
-    "mammoth": "^1.9.0",
-    "pdf-parse": "^1.1.1",
-    "puppeteer": "^24.7.2",
-    "tesseract.js": "^6.0.1",
-    "wikipedia": "^2.1.2"
+    "crawlee": "^3.15.3",
+    "csv-parse": "^6.1.0",
+    "fast-xml-parser": "^5.3.3",
+    "google-news-scraper": "^2.7.0",
+    "google-sr": "^6.0.0",
+    "https-proxy-agent": "^7.0.6",
+    "jsdom": "^27.4.0",
+    "mammoth": "^1.11.0",
+    "pdf-parse": "^2.4.5",
+    "puppeteer": "^24.34.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "socks-proxy-agent": "^8.0.5",
+    "tesseract.js": "^7.0.0",
+    "turndown": "^7.2.2",
+    "wikipedia": "^2.4.2",
+    "yahoo-finance2": "^3.11.2",
+    "zod-to-json-schema": "^3.25.1"
   },
   "devDependencies": {
-    "@types/jsdom": "^21.1.6",
-    "@types/node": "^20.11.24",
+    "@types/jsdom": "^27.0.0",
+    "@types/node": "^25.0.3",
+    "@types/turndown": "^5.0.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=16"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/M1noa/llm-search.git"
+    "url": "git+https://gitlab.com/m1noa/llm-kit.git"
   },
   "bugs": {
-    "url": "https://github.com/M1noa/llm-search/issues"
+    "url": "https://gitlab.com/m1noa/llm-kit/issues"
   },
-  "homepage": "https://github.com/M1noa/llm-search#readme",
+  "homepage": "https://gitlab.com/m1noa/llm-kit#readme",
   "files": [
     "dist",
     "LICENSE",

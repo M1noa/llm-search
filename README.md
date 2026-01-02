@@ -1,13 +1,16 @@
 # llm-kit 🔍
 
-[![npm version](https://badge.fury.io/js/llm-search.svg)](https://badge.fury.io/js/llm-search)
+[![npm version](https://badge.fury.io/js/llm-kit.svg)](https://badge.fury.io/js/llm-kit)
 
 > A Node.js module for searching and scraping web content, designed for LLMs but useful for everyone!
 
 ## Features
 
-- Search multiple engines (Google, DuckDuckGo)
+- Search multiple engines (Google, DuckDuckGo, SearxNG)
+- News search (Google News, DuckDuckGo)
+- Finance data (Yahoo Finance)
 - Wikipedia search and content extraction
+- Media search (Movies, TV, Anime) via TMDB, AniDB, TheTVDB
 - HackerNews scraping
 - Webpage content extraction
 - Document parsing (PDF, DOCX, CSV)
@@ -19,7 +22,7 @@
 ## Installation
 
 ```bash
-npm install llm-search
+npm install llm-kit
 
 # Optional: Install OCR language data for non-English languages
 npm install tesseract.js-data
@@ -28,11 +31,23 @@ npm install tesseract.js-data
 ## Quick Start
 
 ```typescript
-import { search, parse } from "llm-search";
+import { search, parse, searchNews, searchMedia, getQuote } from "llm-kit";
 
 // Web Search
 const results = await search("typescript tutorial");
 console.log(results);
+
+// News Search
+const news = await searchNews("technology trends");
+console.log(news);
+
+// Media Search
+const movies = await searchMedia("Inception", { type: "movie" });
+console.log(movies);
+
+// Finance Data
+const quote = await getQuote("AAPL");
+console.log(quote);
 
 // Parse Documents
 const pdfResult = await parse("document.pdf");
@@ -57,6 +72,9 @@ console.log(imageResult.text);
 - PDF files (`.pdf`)
 - Word documents (`.docx`)
 - CSV files (`.csv`)
+- XML files (`.xml`)
+- JSON files (`.json`)
+- Text files (`.txt`, `.md`, etc.)
 
 ### Images (OCR)
 
@@ -70,6 +88,9 @@ console.log(imageResult.text);
 See the [docs](./docs) directory for detailed documentation:
 
 - [Search](./docs/search.md) - Web search capabilities
+- [Media](./docs/media.md) - Media search (Movies, TV, Anime)
+- [News](./docs/news.md) - News search capabilities
+- [Finance](./docs/finance.md) - Finance data capabilities
 - [Wikipedia](./docs/wikipedia.md) - Wikipedia integration
 - [HackerNews](./docs/hackernews.md) - HackerNews API
 - [Webpage](./docs/webpage.md) - Web content extraction
@@ -80,16 +101,30 @@ See the [docs](./docs) directory for detailed documentation:
 ### Web Search
 
 ```typescript
-import { search } from "llm-search";
+import { search } from "llm-kit";
 
 const results = await search("typescript tutorial");
 console.log(results);
 ```
 
+### Media Search
+
+```typescript
+import { searchMedia } from "llm-kit";
+
+// Search for a movie
+const movies = await searchMedia("The Matrix", { type: "movie" });
+console.log(movies);
+
+// Search for anime (uses AniDB)
+const anime = await searchMedia("Cowboy Bebop", { type: "anime" });
+console.log(anime);
+```
+
 ### Document Parsing
 
 ```typescript
-import { parse } from "llm-search";
+import { parse } from "llm-kit";
 
 // Parse PDF
 const pdfResult = await parse("document.pdf");
@@ -125,7 +160,7 @@ try {
 }
 ```
 
-[![NPM Download Stats](https://nodei.co/npm/llm-search.png?downloads=true)](https://www.npmjs.com/package/llm-search)
+[![NPM Download Stats](https://nodei.co/npm/llm-kit.png?downloads=true)](https://www.npmjs.com/package/llm-kit)
 
 ## Dependencies
 
@@ -133,9 +168,9 @@ This package uses these great libraries:
 
 - [@mozilla/readability](https://www.npmjs.com/package/@mozilla/readability) - Web content extraction
 - [csv-parse](https://www.npmjs.com/package/csv-parse) - CSV parsing
-- [duck-duck-scrape](https://www.npmjs.com/package/duck-duck-scrape) - DuckDuckGo search
 - [fast-xml-parser](https://www.npmjs.com/package/fast-xml-parser) - XML parsing
 - [google-sr](https://www.npmjs.com/package/google-sr) - Google search
+- [google-news-scraper](https://www.npmjs.com/package/google-news-scraper) - Google News search
 - [jsdom](https://www.npmjs.com/package/jsdom) - DOM emulation for web scraping
 - [mammoth](https://www.npmjs.com/package/mammoth) - DOCX parsing
 - [pdf-parse](https://www.npmjs.com/package/pdf-parse) - PDF parsing

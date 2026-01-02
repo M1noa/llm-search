@@ -15,6 +15,7 @@ The parser module provides a unified interface for parsing various file types in
 ## Installation
 
 The module requires several dependencies:
+
 ```bash
 npm install pdf-parse mammoth csv-parse tesseract.js fast-xml-parser
 ```
@@ -24,15 +25,15 @@ npm install pdf-parse mammoth csv-parse tesseract.js fast-xml-parser
 ### Basic Usage
 
 ```typescript
-import { parse } from 'llm-search';
+import { parse } from "llm-kit";
 
 // parse a file by path (ez mode)
-const result = await parse('path/to/file.pdf');
+const result = await parse("path/to/file.pdf");
 console.log(result.text);
 
 // parse a buffer with known filename (recommended for buffers)
-const buffer = readFileSync('path/to/file.docx');
-const result = await parse(buffer, {}, 'file.docx');
+const buffer = readFileSync("path/to/file.docx");
+const result = await parse(buffer, {}, "file.docx");
 console.log(result.text);
 
 // parse a buffer without filename (we'll try our best to detect type)
@@ -44,6 +45,7 @@ console.log(result.text);
 ### Type Detection for Buffers
 
 When parsing buffers, the parser attempts to detect the file type in several ways:
+
 1. Using the provided filename hint (most reliable)
 2. Checking file magic numbers for binary formats
 3. Attempting JSON parsing for potential JSON data
@@ -54,16 +56,16 @@ When parsing buffers, the parser attempts to detect the file type in several way
 
 ```typescript
 // Parse CSV with custom options
-const csvResult = await parse('data.csv', {
-  csv: {
-    delimiter: ';',
-    columns: true
-  }
+const csvResult = await parse("data.csv", {
+    csv: {
+        delimiter: ";",
+        columns: true,
+    },
 });
 
 // OCR with different language
-const imageResult = await parse('image.png', {
-  language: 'spa' // Spanish
+const imageResult = await parse("image.png", {
+    language: "spa", // Spanish
 });
 ```
 
@@ -73,21 +75,31 @@ The parser returns a `ParseResult` object:
 
 ```typescript
 interface ParseResult {
-  type: 'pdf' | 'docx' | 'csv' | 'image' | 'text' | 'xml' | 'json' | 'unknown';
-  text: string;           // extracted text content, like ugh whatever
-  metadata?: any;         // file metadata n stuff
-  data?: any;            // structured data if we got it (xml/json/csv mostly)
+    type:
+        | "pdf"
+        | "docx"
+        | "csv"
+        | "image"
+        | "text"
+        | "xml"
+        | "json"
+        | "unknown";
+    text: string; // extracted text content
+    metadata?: Record<string, unknown>; // file metadata
+    data?: unknown; // structured data if we got it (xml/json/csv mostly)
 }
 ```
 
 ## File Type Specific Features
 
 ### PDF Files
+
 - Extracts text content
 - Provides metadata (page count, PDF info, version)
 - Preserves document structure
 
 ### DOCX Files
+
 - Extracts text content
 - Enhanced document handling via Mammoth
 - Supports both HTML and raw text extraction
@@ -95,12 +107,14 @@ interface ParseResult {
 - Automatically cleans and preserves formatting
 
 ### CSV Files
+
 - Extracts raw text
 - Provides structured data array
 - Supports custom delimiters
 - Optional column headers
 
 ### Images (OCR)
+
 - Extracts text via Tesseract OCR
 - Supports multiple languages
 - Returns confidence scores
@@ -110,19 +124,20 @@ interface ParseResult {
 
 ```typescript
 try {
-  const result = await parse('file.pdf');
+    const result = await parse("file.pdf");
 } catch (error) {
-  if (error.code === 'PDF_PARSE_ERROR') {
-    // Handle PDF-specific error
-  } else if (error.code === 'DOCX_PARSE_ERROR') {
-    // Handle DOCX-specific error
-  }
-  // Generic error handling
-  console.error(error.message);
+    if (error.code === "PDF_PARSE_ERROR") {
+        // Handle PDF-specific error
+    } else if (error.code === "DOCX_PARSE_ERROR") {
+        // Handle DOCX-specific error
+    }
+    // Generic error handling
+    console.error(error.message);
 }
 ```
 
 ## Supported Error Codes
+
 - `PDF_PARSE_ERROR`: pdf parsing failed (ugh these pdfs i swear)
 - `DOCX_PARSE_ERROR`: docx parsing failed (word docs are the worst)
 - `CSV_PARSE_ERROR`: csv parsing went sideways
@@ -135,6 +150,7 @@ try {
 ## Language Support
 
 For OCR (image parsing), the following languages are supported:
+
 - English (default, 'eng')
 - Spanish ('spa')
 - French ('fra')
@@ -151,27 +167,31 @@ For OCR (image parsing), the following languages are supported:
 ## Examples
 
 ### Parse PDF and Extract Text
+
 ```typescript
-const result = await parse('document.pdf');
+const result = await parse("document.pdf");
 console.log(`Pages: ${result.metadata.pages}`);
 console.log(`Text: ${result.text}`);
 ```
 
 ### Parse CSV with Custom Options
+
 ```typescript
-const result = await parse('data.csv', {
-  csv: {
-    delimiter: ';',
-    columns: true
-  }
+const result = await parse("data.csv", {
+    csv: {
+        delimiter: ";",
+        columns: true,
+    },
 });
 console.log(`Rows: ${result.metadata.rowCount}`);
 console.log(`Data:`, result.data);
 ```
 
 ### OCR Image in Different Language
+
 ```typescript
-const result = await parse('chinese-text.png', {
-  language: 'chi_sim'
+const result = await parse("chinese-text.png", {
+    language: "chi_sim",
 });
 console.log(`Extracted Text: ${result.text}`);
+```

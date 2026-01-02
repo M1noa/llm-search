@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:brainstorming)",
+      "Skill(superpowers:using-superpowers)",
+      "Skill(superpowers:systematic-debugging)",
+      "Skill(superpowers:verification-before-completion)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:serpapi.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.themoviedb.org)",
+      "WebFetch(domain:anidb.net)",
+      "WebFetch(domain:thetvdb.com)"
+    ]
+  }
+}

@@ -4,15 +4,16 @@ todo list of what i need to add or do with this project
 
 (feel free to do any of this for me and make a pull request)
 
-- [ ] scrape to structured json like (or using) [mishushakov/llm-scraper](https://github.com/mishushakov/llm-scraper)
+- [x] scrape to structured json like (or using) [mishushakov/llm-scraper](https://github.com/mishushakov/llm-scraper)
 
-- [ ] make webpage responnd with json of the title, favicon, processed html without styling or javascript, images and other files, and readability text and a markdown version of it
+- [x] make scraping hve a way to responnd with dictionary/array of the title, favicon, processed html without styling or javascript, images and other files, and readability text and a markdown version of it
 
-- [ ] website crawling module via [crawlee](https://www.npmjs.com/package/crawlee)
+- [x] website crawling module via [crawlee](https://www.npmjs.com/package/crawlee)
 
 - [x] [pdf](https://www.npmjs.com/package/pdf-parse), [docx](https://www.npmjs.com/package/docx4js), [csv](https://www.npmjs.com/package/csv), [image](https://www.npmjs.com/package/tesseract) (default eng if lang not givin), etc // doc parser to objects, javascript, or text
 
-- [ ] autocomplete module via
+- [x] autocomplete module via
+
 ```
       google:
       http://suggestqueries.google.com/complete/search?client=firefox&q=hello%20world
@@ -43,20 +44,21 @@ todo list of what i need to add or do with this project
       swisscows:
       https://api.swisscows.com/suggest?locale=en-US&itemsCount=20&query=hello%20world
 ```
+
 let it be customizable but use duckduckgo by default
 
-- [ ] make a news module to get news from [google news](https://www.npmjs.com/package/google-news-scraper) and [duckduckgo](https://www.npmjs.com/package/duck-duck-scrape) (use news search cunfion on duck duck scrape) defautlt being google news
+- [x] make a news module to get news from [google news](https://www.npmjs.com/package/google-news-scraper) and duckduckgo (using our custom scraper) defautlt being google news
 
-- [ ] finance module via [yahoo finance](https://www.npmjs.com/package/yahoo-finance2) (default) and [google finance](https://www.npmjs.com/package/google-finance) if this module still works
+- [x] finance module via [yahoo finance](https://www.npmjs.com/package/yahoo-finance2) (default) and [google finance](https://www.npmjs.com/package/google-finance) if this module still works
 
-- [ ] flights module to search flights via [google flights](https://www.npmjs.com/package/google-flights) if it works
+- [x] flights module to search flights via [google flights](https://www.npmjs.com/package/google-flights) if it works
 
-- [ ] proxy support
+- [x] proxy support
 
-- [ ] Google & DDG Direct Answer Box scraping in the webpage module
+- [x] Google & DDG Direct Answer Box scraping in the webpage module
 
-- [ ] tmdb/anidb/thetvdb scraping without api key (including getting watch providers / streaming services)
+- [x] tmdb/anidb/thetvdb scraping without api key (including getting watch providers / streaming services)
 
-- [ ] events module via [google events](https://www.npmjs.com/package/google-events-scraper) that that module still works
+- [x] events module via [google events](https://www.npmjs.com/package/google-events-scraper) that that module still works
 
-- [ ] search images in web search
+- [x] search images in web search
