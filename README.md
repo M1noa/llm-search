@@ -1,6 +1,6 @@
-# llm-search 🔍
+# llm-kit 🔍
 
-[![npm version](https://badge.fury.io/js/llm-search.svg)](https://badge.fury.io/js/llm-search)
+[![npm version](https://badge.fury.io/js/llm-kit.svg)](https://badge.fury.io/js/llm-kit)
 
 > A Node.js module for searching and scraping web content, designed for LLMs but useful for everyone!
 
@@ -26,7 +26,7 @@
 ## Installation
 
 ```bash
-npm install llm-search
+npm install llm-kit
 
 # Optional: Install OCR language data for non-English languages
 npm install tesseract.js-data
@@ -43,7 +43,7 @@ import {
   getQuote,
   getSuggestions,
   crawl,
-} from "llm-search";
+} from "llm-kit";
 
 // Web Search
 const results = await search("typescript tutorial");
@@ -125,7 +125,7 @@ See the [docs](./docs) directory for detailed documentation:
 ### Web Search
 
 ```typescript
-import { search } from "llm-search";
+import { search } from "llm-kit";
 
 const results = await search("typescript tutorial");
 console.log(results);
@@ -134,7 +134,7 @@ console.log(results);
 ### Media Search
 
 ```typescript
-import { searchMedia } from "llm-search";
+import { searchMedia } from "llm-kit";
 
 // Search for a movie
 const movies = await searchMedia("The Matrix", { type: "movie" });
@@ -148,7 +148,7 @@ console.log(anime);
 ### Autocomplete & Crawling
 
 ```typescript
-import { getSuggestions, crawl } from "llm-search";
+import { getSuggestions, crawl } from "llm-kit";
 
 // Get search suggestions
 const suggestions = await getSuggestions("best javascript framework");
@@ -165,7 +165,7 @@ console.log(`Crawled ${pages.length} pages`);
 ### Specialized Search
 
 ```typescript
-import { searchFlights, searchEvents } from "llm-search";
+import { searchFlights, searchEvents } from "llm-kit";
 
 // Find flights
 const flights = await searchFlights({
@@ -181,7 +181,7 @@ const events = await searchEvents("tech conferences in San Francisco");
 ### Document Parsing
 
 ```typescript
-import { parse } from "llm-search";
+import { parse } from "llm-kit";
 
 // Parse PDF
 const pdfResult = await parse("document.pdf");
@@ -217,7 +217,7 @@ try {
 }
 ```
 
-[![NPM Download Stats](https://nodei.co/npm/llm-search.png?downloads=true)](https://www.npmjs.com/package/llm-search)
+[![NPM Download Stats](https://nodei.co/npm/llm-kit.png?downloads=true)](https://www.npmjs.com/package/llm-kit)
 
 ## Dependencies
 

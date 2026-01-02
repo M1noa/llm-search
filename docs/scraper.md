@@ -17,7 +17,7 @@ The scraper module provides powerful web scraping and content extraction capabil
 
 ### Search Functions
 ```typescript
-import { search, SearchResult } from 'llm-search';
+import { search, SearchResult } from 'llm-kit';
 
 // Basic search - automatically handles bot detection
 const results: SearchResult[] = await search('typescript tutorial');
@@ -26,7 +26,7 @@ console.log(results);
 
 ### Webpage Content Extraction
 ```typescript
-import { getWebpageContent, getWebpageText } from 'llm-search';
+import { getWebpageContent, getWebpageText } from 'llm-kit';
 
 // Extract content from any webpage
 const content = await getWebpageContent('https://example.com/article');
@@ -50,7 +50,7 @@ const results = await search('react tutorial', {
 
 ### Basic Content Extraction
 ```typescript
-import { getWebpageContent, WebpageContent } from 'llm-search';
+import { getWebpageContent, WebpageContent } from 'llm-kit';
 
 // Extract content from any webpage
 const content: WebpageContent = await getWebpageContent('https://example.com/article');
@@ -108,7 +108,7 @@ const hnContent = await getWebpageContent('https://news.ycombinator.com/item?id=
 
 ### URL Accessibility Check
 ```typescript
-import { isUrlAccessible } from 'llm-search';
+import { isUrlAccessible } from 'llm-kit';
 
 const isAccessible = await isUrlAccessible('https://example.com');
 if (isAccessible) {
@@ -120,7 +120,7 @@ if (isAccessible) {
 
 ### Using Proxy Object
 ```typescript
-import { search, ProxyConfig } from 'llm-search';
+import { search, ProxyConfig } from 'llm-kit';
 
 const proxyConfig: ProxyConfig = {
   type: 'http',        // or 'https', 'socks4', 'socks5'
@@ -181,7 +181,7 @@ const results = await search('scraping tutorial', {
 ## Advanced Options
 
 ```typescript
-import { ScraperOptions } from 'llm-search';
+import { ScraperOptions } from 'llm-kit';
 
 const options: ScraperOptions = {
   limit: 10,              // Number of results (default: 10)
@@ -211,7 +211,7 @@ const results = await search('advanced query', options);
 
 ### Google Search
 ```typescript
-import { searchGoogle } from 'llm-search';
+import { searchGoogle } from 'llm-kit';
 
 // Google-specific search
 const googleResults = await searchGoogle('machine learning', {
@@ -222,7 +222,7 @@ const googleResults = await searchGoogle('machine learning', {
 
 ### DuckDuckGo Search
 ```typescript
-import { searchDuckDuckGo } from 'llm-search';
+import { searchDuckDuckGo } from 'llm-kit';
 
 // DuckDuckGo-specific search
 const ddgResults = await searchDuckDuckGo('data science', {
@@ -267,7 +267,7 @@ The new scraper module is backward compatible with the old search API:
 
 ```typescript
 // Old API (still works)
-import { SearchOptions } from 'llm-search';
+import { SearchOptions } from 'llm-kit';
 
 const oldOptions: SearchOptions = {
   limit: 10,
@@ -276,7 +276,7 @@ const oldOptions: SearchOptions = {
 };
 
 // New API (recommended)
-import { ScraperOptions } from 'llm-search';
+import { ScraperOptions } from 'llm-kit';
 
 const newOptions: ScraperOptions = {
   limit: 10,
@@ -303,7 +303,7 @@ const newOptions: ScraperOptions = {
 ## Example: Complete Scraper Setup
 
 ```typescript
-import { search, ProxyConfig, ScraperOptions } from 'llm-search';
+import { search, ProxyConfig, ScraperOptions } from 'llm-kit';
 
 async function advancedScraping() {
   const proxyConfig: ProxyConfig = {

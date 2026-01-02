@@ -9,7 +9,7 @@ The Wikipedia module provides functions for searching Wikipedia and retrieving a
 Search Wikipedia articles.
 
 ```typescript
-import { wikiSearch } from 'llm-search';
+import { wikiSearch } from 'llm-kit';
 
 const results = await wikiSearch('Node.js', 5);
 ```
@@ -19,7 +19,7 @@ const results = await wikiSearch('Node.js', 5);
 Get the full content of a Wikipedia article.
 
 ```typescript
-import { wikiGetContent } from 'llm-search';
+import { wikiGetContent } from 'llm-kit';
 
 const content = await wikiGetContent('Node.js');
 ```
@@ -29,7 +29,7 @@ const content = await wikiGetContent('Node.js');
 Get a summary of a Wikipedia article.
 
 ```typescript
-import { wikiGetSummary } from 'llm-search';
+import { wikiGetSummary } from 'llm-kit';
 
 const summary = await wikiGetSummary('Node.js');
 ```
@@ -39,7 +39,7 @@ const summary = await wikiGetSummary('Node.js');
 Set the Wikipedia language (default: 'en').
 
 ```typescript
-import { setWikiLang } from 'llm-search';
+import { setWikiLang } from 'llm-kit';
 
 setWikiLang('es'); // switch to Spanish Wikipedia
 ```

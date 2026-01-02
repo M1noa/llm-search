@@ -5,7 +5,7 @@ The flights module allows you to search for flight prices and schedules using Go
 ## Usage
 
 ```typescript
-import { searchFlights } from "llm-search";
+import { searchFlights } from "llm-kit";
 
 // Simple string query
 const results = await searchFlights("flights from JFK to LHR");

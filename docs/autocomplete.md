@@ -17,7 +17,7 @@ The autocomplete module provides real-time search suggestions from multiple sear
 ## Usage
 
 ```typescript
-import { getSuggestions } from "llm-search";
+import { getSuggestions } from "llm-kit";
 
 // Default (DuckDuckGo)
 const results = await getSuggestions("typescript");
