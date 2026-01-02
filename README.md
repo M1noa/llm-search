@@ -117,7 +117,7 @@ See the [docs](./docs) directory for detailed documentation:
 - [Finance](./docs/finance.md) - Finance data capabilities
 - [Wikipedia](./docs/wikipedia.md) - Wikipedia integration
 - [HackerNews](./docs/hackernews.md) - HackerNews API
-- [Webpage](./docs/webpage.md) - Web content extraction
+- [Webpage](./docs/scraper.md) - Web content extraction
 - [Parser](./docs/parser.md) - Document and image parsing
 
 ## Example Usage
