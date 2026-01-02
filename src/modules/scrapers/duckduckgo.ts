@@ -310,13 +310,12 @@ export async function searchDuckDuckGo(query: string, options: ScraperOptions = 
         // if we suspect bot detection, but if fetchWithDetection didn't throw, maybe it's just no results.
         // However, DDG HTML version sometimes gives 0 results for complex queries where JS version works.
         // So fallback is good.
-        // console.warn("No results from DDG HTML scraper, falling back to Puppeteer...");
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (errorMessage === "Bot protection detected" && mergedOptions.antiBot?.enabled) {
-          // console.warn("Bot protection detected, falling back to Puppeteer...");
+          // Silent fallback
         } else {
-          // console.warn("DDG HTML scrape failed, falling back to Puppeteer:", errorMessage);
+          // Silent fallback
         }
       }
     }

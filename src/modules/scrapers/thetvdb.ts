@@ -160,7 +160,6 @@ export async function getTheTVDBDetails(url: string, options: MediaSearchOptions
       genres: genres.length > 0 ? genres : undefined,
     };
   } catch (e) {
-    // console.warn("Failed to get TheTVDB details", e);
     return {};
   }
 }

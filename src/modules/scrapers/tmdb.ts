@@ -191,7 +191,6 @@ export async function getTMDBDetails(url: string, options: MediaSearchOptions = 
       watchProviders: watchProviders.length > 0 ? watchProviders : undefined,
     };
   } catch (e) {
-    // console.warn("Failed to get TMDB details", e);
     return {};
   }
 }
