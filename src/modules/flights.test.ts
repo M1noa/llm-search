@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { searchFlights } from "./flights";
 import * as common from "./common";
-import type { Browser, Page } from "puppeteer";
+import type { Browser } from "puppeteer";
 
 // Mock common module
 vi.mock("./common", async () => {

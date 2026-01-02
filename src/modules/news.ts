@@ -1,4 +1,4 @@
-import { ScraperOptions, NewsResult, SearchResult } from "../types";
+import { ScraperOptions, NewsResult } from "../types";
 import { searchGoogleNews } from "./scrapers/google-news";
 import { searchDuckDuckGo } from "./scrapers/duckduckgo";
 

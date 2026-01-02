@@ -177,7 +177,6 @@ describe("Autocomplete Module", () => {
       headers: new Headers(),
     });
 
-    // @ts-ignore - testing default parameter
     const result = await getSuggestions(mockQuery);
 
     expect(result.source).toBe("duckduckgo");

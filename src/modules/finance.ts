@@ -13,11 +13,6 @@ export { getStockQuote } from "./scrapers/yahoo-finance";
  */
 export async function getQuote(symbol: string): Promise<FinanceResult> {
   // 1. Try Yahoo Finance (primary source)
-  try {
-    return await getStockQuote(symbol);
-  } catch (err) {
-    // If we had other providers (e.g. Google Finance), we would fallback here
-    // For now, just re-throw
-    throw err;
-  }
+  // If we had other providers (e.g. Google Finance), we would fallback here
+  return await getStockQuote(symbol);
 }

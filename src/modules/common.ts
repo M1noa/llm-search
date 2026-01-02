@@ -177,7 +177,7 @@ export async function createStealthBrowser(proxy?: { url: string; type: string }
     await context.overridePermissions("https://www.google.com", []);
     await context.overridePermissions("https://duckduckgo.com", []);
     if (pages.length === 0) await page.close();
-  } catch (e) {
+  } catch {
     // Ignore permissions errors if context doesn't support it
   }
 

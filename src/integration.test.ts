@@ -5,7 +5,7 @@ import { getTopStories, getNewStories, getStoryById } from "./modules/hackernews
 import { parse } from "./modules/parser";
 import { search, searchDuckDuckGo, searchGoogle } from "./modules/search";
 import { searchMedia } from "./modules/media";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
 import type { SearchResult } from "./types";
 
@@ -181,7 +181,7 @@ describe("📦 LLM-Kit Integration Tests", () => {
       const csvPath = join(process.cwd(), "test-sample.csv");
 
       // Create a temporary CSV for testing
-      require("fs").writeFileSync(csvPath, testData);
+      writeFileSync(csvPath, testData);
 
       try {
         const result = await parse(csvPath);
@@ -195,7 +195,7 @@ describe("📦 LLM-Kit Integration Tests", () => {
         expect(result.text).toContain("Sample");
       } finally {
         // Cleanup
-        require("fs").unlinkSync(csvPath);
+        unlinkSync(csvPath);
       }
     });
 
@@ -203,7 +203,7 @@ describe("📦 LLM-Kit Integration Tests", () => {
       const testText = "This is a test text file.\nWith multiple lines.\n";
       const txtPath = join(process.cwd(), "test-sample.txt");
 
-      require("fs").writeFileSync(txtPath, testText);
+      writeFileSync(txtPath, testText);
 
       try {
         const result = await parse(txtPath);
@@ -215,7 +215,7 @@ describe("📦 LLM-Kit Integration Tests", () => {
         expect(result.type).toBe("text");
         expect(result.text).toBe(testText);
       } finally {
-        require("fs").unlinkSync(txtPath);
+        unlinkSync(txtPath);
       }
     });
 
@@ -223,7 +223,7 @@ describe("📦 LLM-Kit Integration Tests", () => {
       const testJson = { name: "Test", value: 42, nested: { key: "value" } };
       const jsonPath = join(process.cwd(), "test-sample.json");
 
-      require("fs").writeFileSync(jsonPath, JSON.stringify(testJson, null, 2));
+      writeFileSync(jsonPath, JSON.stringify(testJson, null, 2));
 
       try {
         const result = await parse(jsonPath);
@@ -235,7 +235,7 @@ describe("📦 LLM-Kit Integration Tests", () => {
         expect(result.type).toBe("json");
         expect(result.data).toEqual(testJson);
       } finally {
-        require("fs").unlinkSync(jsonPath);
+        unlinkSync(jsonPath);
       }
     });
   });

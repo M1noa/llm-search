@@ -214,7 +214,9 @@ async function withTempFile<T>(buffer: Buffer, extension: string, callback: (pat
   } finally {
     try {
       unlinkSync(tempPath);
-    } catch {}
+    } catch {
+      // ignore cleanup error
+    }
   }
 }
 

@@ -11,7 +11,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:www.themoviedb.org)",
       "WebFetch(domain:anidb.net)",
-      "WebFetch(domain:thetvdb.com)"
+      "WebFetch(domain:thetvdb.com)",
+      "Skill(git:checkout)",
+      "Skill(git:commit)"
     ]
   }
 }

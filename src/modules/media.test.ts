@@ -122,7 +122,7 @@ describe("Media Search Coordinator", () => {
 
         try {
           await searchMedia("Unknown Movie", { type: "movie" });
-        } catch (e) {
+        } catch {
           // Expected to throw
         }
 
@@ -181,7 +181,7 @@ describe("Media Search Coordinator", () => {
       vi.mocked(tmdb.getTMDBDetails).mockResolvedValue(mockDetails);
       const url = "https://some-mirror.com/movie/123";
 
-      const result = await getMediaDetails(url, "tmdb");
+      await getMediaDetails(url, "tmdb");
 
       expect(tmdb.getTMDBDetails).toHaveBeenCalledWith(url, expect.anything());
     });

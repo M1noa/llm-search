@@ -1,4 +1,4 @@
-import { Event, EventResult, EventSearchOptions, SearchError } from "../types";
+import { EventResult, EventSearchOptions, SearchError } from "../types";
 import { createStealthBrowser, parseProxyConfig, createRealisticHeaders } from "./common";
 
 /**
@@ -10,7 +10,7 @@ import { createStealthBrowser, parseProxyConfig, createRealisticHeaders } from "
 export async function searchEvents(query: string, options: EventSearchOptions = {}): Promise<EventResult> {
   // Construct URL
   // We use the standard search with ibp=htl;events param which triggers the events UI
-  let url = `https://www.google.com/search?q=${encodeURIComponent(query)}&ibp=htl;events`;
+  const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&ibp=htl;events`;
 
   if (options.date) {
     // Google supports date filters via chip selection or query refinement
@@ -38,7 +38,7 @@ export async function searchEvents(query: string, options: EventSearchOptions = 
         await consentButton.click();
         await page.waitForNavigation({ waitUntil: "networkidle2" }).catch(() => {});
       }
-    } catch (e) {
+    } catch {
       // No consent button found, proceed
     }
 
@@ -47,7 +47,7 @@ export async function searchEvents(query: string, options: EventSearchOptions = 
     // We'll wait for generic item containers
     try {
       await page.waitForSelector("ul li", { timeout: 10000 });
-    } catch (e) {
+    } catch {
       // Fallback
     }
 
@@ -115,7 +115,7 @@ export async function searchEvents(query: string, options: EventSearchOptions = 
 
           // Link - sometimes the item itself is clickable or contains a link
           const linkEl = item.querySelector("a");
-          let link = linkEl?.href;
+          const link = linkEl?.href;
 
           // If no link found, construct one (it's usually a google search refinement)
           if (!link) {
@@ -130,7 +130,7 @@ export async function searchEvents(query: string, options: EventSearchOptions = 
             description: text, // Store full text as description for now
             image,
           });
-        } catch (err) {
+        } catch {
           // Skip
         }
       });

@@ -258,7 +258,7 @@ export async function getWebpageContent(
           // If bot protection detected, re-run with puppeteer
           return await getWebpageContent(url, { ...opts, usePuppeteer: true });
         }
-      } catch (error) {
+      } catch {
         // If basic fetch fails, try with puppeteer
         return await getWebpageContent(url, { ...opts, usePuppeteer: true });
       }

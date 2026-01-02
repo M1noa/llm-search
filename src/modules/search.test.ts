@@ -182,17 +182,6 @@ describe("Search Module", () => {
         .mockRejectedValueOnce(new Error("DDG Fetch Fail")) // DDG HTML
         .mockResolvedValueOnce({ headers: {}, body: "google html" }); // Google Fetch (for next step)
 
-      const mockBrowser = {
-        newPage: vi.fn().mockResolvedValue({
-          setViewport: vi.fn(),
-          setExtraHTTPHeaders: vi.fn(),
-          goto: vi.fn(),
-          waitForSelector: vi.fn(),
-          evaluate: vi.fn(), // Puppeteer DDG fails (returns empty or throws)
-          close: vi.fn(),
-        }),
-        close: vi.fn(),
-      };
       // Mock createStealthBrowser to throw for DDG puppeteer attempt to simulate full failure
       (common.createStealthBrowser as Mock).mockRejectedValueOnce(new Error("DDG Puppeteer Fail"));
 

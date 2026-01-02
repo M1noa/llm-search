@@ -1,4 +1,4 @@
-import { Flight, FlightResult, FlightSearchOptions, SearchError } from "../types";
+import { FlightResult, FlightSearchOptions, SearchError } from "../types";
 import { createStealthBrowser, parseProxyConfig, createRealisticHeaders } from "./common";
 
 /**
@@ -62,7 +62,7 @@ export async function searchFlights(
         await consentButton.click();
         await page.waitForNavigation({ waitUntil: "networkidle2" }).catch(() => {}); // Wait a bit if nav happens
       }
-    } catch (e) {
+    } catch {
       // No consent button found, proceed
     }
 
@@ -70,7 +70,7 @@ export async function searchFlights(
     // The selector for flight lists often changes, but usually there are accessible roles
     try {
       await page.waitForSelector('li[class*="pIav2d"]', { timeout: 10000 });
-    } catch (e) {
+    } catch {
       // Fallback or retry
     }
 
@@ -141,7 +141,7 @@ export async function searchFlights(
               stops,
             });
           }
-        } catch (err) {
+        } catch {
           // Skip malformed items
         }
       });

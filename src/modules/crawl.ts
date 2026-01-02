@@ -4,7 +4,6 @@ import {
   Configuration,
   CheerioCrawlingContext,
   PuppeteerCrawlingContext,
-  Request,
   RequestOptions,
 } from "crawlee";
 import { CrawlOptions, CrawlResult, CrawledPage, SearchError } from "../types";
@@ -94,7 +93,7 @@ export async function crawl(startUrl: string, options: CrawlOptions = {}): Promi
 
   // Proxy configuration logic could go here
   if (options.proxy) {
-    const proxyConfig = parseProxyConfig(options.proxy);
+    parseProxyConfig(options.proxy);
     // Note: detailed proxy configuration for Crawlee would require creating a ProxyConfiguration
     // instance, but for now we rely on Puppeteer's launchContext or Cheerio's defaults
   }

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { parse } from "./parser";
 import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
