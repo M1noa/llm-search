@@ -22,10 +22,7 @@ async function enforceRateLimit() {
   lastSearchTime = Date.now();
 }
 
-export async function searchTheTVDB(
-  query: string,
-  options: MediaSearchOptions = {}
-): Promise<MediaResult[]> {
+export async function searchTheTVDB(query: string, options: MediaSearchOptions = {}): Promise<MediaResult[]> {
   try {
     await enforceRateLimit();
 
@@ -39,12 +36,10 @@ export async function searchTheTVDB(
       }
     } catch (e) {
       if (mergedOptions.forcePuppeteer) throw e;
-      console.warn("TheTVDB fetch failed, falling back to Puppeteer", e);
     }
 
     // Fallback to Puppeteer
     return await scrapeTheTVDBWithPuppeteer(searchUrl, mergedOptions);
-
   } catch (error) {
     throw {
       message: "TheTVDB search failed",
@@ -73,9 +68,9 @@ async function scrapeTheTVDBWithPuppeteer(url: string, options: MediaSearchOptio
 
     // Wait for results list
     try {
-        await page.waitForSelector(".list-group, .media-list", { timeout: 5000 });
+      await page.waitForSelector(".list-group, .media-list", { timeout: 5000 });
     } catch (e) {
-        return [];
+      return [];
     }
 
     const html = await page.content();
@@ -120,10 +115,10 @@ function parseTheTVDBResults(doc: Document): MediaResult[] {
       }
       // Often TheTVDB lists translations for "Series" or "Movie" in badges
       const badges = item.querySelectorAll(".badge");
-      badges.forEach(badge => {
-          const text = badge.textContent?.toLowerCase();
-          if (text === "movie") mediaType = "movie";
-          if (text === "series") mediaType = "tv";
+      badges.forEach((badge) => {
+        const text = badge.textContent?.toLowerCase();
+        if (text === "movie") mediaType = "movie";
+        if (text === "series") mediaType = "tv";
       });
 
       results.push({
@@ -133,7 +128,7 @@ function parseTheTVDBResults(doc: Document): MediaResult[] {
         releaseDate: smallText?.textContent?.trim(),
         posterUrl,
         source: "thetvdb",
-        mediaType
+        mediaType,
       });
     }
   });
@@ -142,30 +137,30 @@ function parseTheTVDBResults(doc: Document): MediaResult[] {
 }
 
 export async function getTheTVDBDetails(url: string, options: MediaSearchOptions = {}): Promise<Partial<MediaResult>> {
-    try {
-        const { body } = await fetchWithDetection(url, options);
-        const dom = new JSDOM(body);
-        const doc = dom.window.document;
+  try {
+    const { body } = await fetchWithDetection(url, options);
+    const dom = new JSDOM(body);
+    const doc = dom.window.document;
 
-        // Extract genres
-        const genres: string[] = [];
-        // Look for genre links or definition lists
-        // Typically in a sidebar or info block
-        const genreLinks = doc.querySelectorAll("a[href*='/genres/']");
-        genreLinks.forEach(link => {
-            if (link.textContent) genres.push(link.textContent.trim());
-        });
+    // Extract genres
+    const genres: string[] = [];
+    // Look for genre links or definition lists
+    // Typically in a sidebar or info block
+    const genreLinks = doc.querySelectorAll("a[href*='/genres/']");
+    genreLinks.forEach((link) => {
+      if (link.textContent) genres.push(link.textContent.trim());
+    });
 
-        // Rating
-        // TheTVDB structure for rating might be in a header or info block
-        // Assuming a generic approach or looking for specific class if known
-        // (This is best effort without live DOM inspection)
+    // Rating
+    // TheTVDB structure for rating might be in a header or info block
+    // Assuming a generic approach or looking for specific class if known
+    // (This is best effort without live DOM inspection)
 
-        return {
-            genres: genres.length > 0 ? genres : undefined,
-        };
-    } catch (e) {
-        console.warn("Failed to get TheTVDB details", e);
-        return {};
-    }
+    return {
+      genres: genres.length > 0 ? genres : undefined,
+    };
+  } catch (e) {
+    // console.warn("Failed to get TheTVDB details", e);
+    return {};
+  }
 }

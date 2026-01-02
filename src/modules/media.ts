@@ -7,10 +7,7 @@ import { searchAniDB, getAniDBDetails } from "./scrapers/anidb";
  * Unified Media Search
  * Coordinates between TMDB, TheTVDB, and AniDB with fallback logic.
  */
-export async function searchMedia(
-  query: string,
-  options: MediaSearchOptions = {}
-): Promise<MediaResult[]> {
+export async function searchMedia(query: string, options: MediaSearchOptions = {}): Promise<MediaResult[]> {
   const { type } = options;
   let results: MediaResult[] = [];
   const errors: Error[] = [];
@@ -24,7 +21,6 @@ export async function searchMedia(
       results = await searchAniDB(query, options);
       if (results.length > 0) return results;
     } catch (e) {
-      console.warn("AniDB search failed, falling back to TMDB", e);
       errors.push(e as Error);
     }
 
@@ -34,7 +30,7 @@ export async function searchMedia(
       // Filter for animation genre if possible, but for now just return results
       if (results.length > 0) return results;
     } catch (e) {
-        errors.push(e as Error);
+      errors.push(e as Error);
     }
   }
 
@@ -45,7 +41,6 @@ export async function searchMedia(
       results = await searchTMDB(query, options);
       if (results.length > 0) return results;
     } catch (e) {
-      console.warn("TMDB TV search failed, falling back to TheTVDB", e);
       errors.push(e as Error);
     }
 
@@ -65,19 +60,18 @@ export async function searchMedia(
       results = await searchTMDB(query, options);
       if (results.length > 0) return results;
     } catch (e) {
-       console.warn("TMDB search failed", e);
-       errors.push(e as Error);
+      errors.push(e as Error);
     }
 
     // If generic search and TMDB failed or found nothing, maybe try TheTVDB?
     // Only if type wasn't specified as "movie" (TheTVDB is mostly TV)
     if (type !== "movie" && results.length === 0) {
-        try {
-            const tvdbResults = await searchTheTVDB(query, options);
-            if (tvdbResults.length > 0) return tvdbResults;
-        } catch (e) {
-            errors.push(e as Error);
-        }
+      try {
+        const tvdbResults = await searchTheTVDB(query, options);
+        if (tvdbResults.length > 0) return tvdbResults;
+      } catch (e) {
+        errors.push(e as Error);
+      }
     }
   }
 
@@ -97,40 +91,39 @@ export async function searchMedia(
  * Automatically determines the source based on the URL or accepts an explicit source.
  */
 export async function getMediaDetails(
-    url: string,
-    source?: "tmdb" | "thetvdb" | "anidb",
-    options: MediaSearchOptions = {}
+  url: string,
+  source?: "tmdb" | "thetvdb" | "anidb",
+  options: MediaSearchOptions = {},
 ): Promise<Partial<MediaResult>> {
-    // Infer source from URL if not provided
-    if (!source) {
-        if (url.includes("themoviedb.org")) source = "tmdb";
-        else if (url.includes("thetvdb.com")) source = "thetvdb";
-        else if (url.includes("anidb.net")) source = "anidb";
-        else {
-            throw {
-                message: "Could not determine media source from URL",
-                code: "UNKNOWN_MEDIA_SOURCE"
-            } as SearchError;
-        }
+  // Infer source from URL if not provided
+  if (!source) {
+    if (url.includes("themoviedb.org")) source = "tmdb";
+    else if (url.includes("thetvdb.com")) source = "thetvdb";
+    else if (url.includes("anidb.net")) source = "anidb";
+    else {
+      throw {
+        message: "Could not determine media source from URL",
+        code: "UNKNOWN_MEDIA_SOURCE",
+      } as SearchError;
     }
+  }
 
-    try {
-        switch (source) {
-            case "tmdb":
-                return await getTMDBDetails(url, options);
-            case "thetvdb":
-                return await getTheTVDBDetails(url, options);
-            case "anidb":
-                return await getAniDBDetails(url, options);
-            default:
-                return {};
-        }
-    } catch (error) {
-        throw {
-            message: `Failed to get details from ${source}`,
-            code: "MEDIA_DETAILS_FAILED",
-            originalError: error
-        } as SearchError;
+  try {
+    switch (source) {
+      case "tmdb":
+        return await getTMDBDetails(url, options);
+      case "thetvdb":
+        return await getTheTVDBDetails(url, options);
+      case "anidb":
+        return await getAniDBDetails(url, options);
+      default:
+        return {};
     }
+  } catch (error) {
+    throw {
+      message: `Failed to get details from ${source}`,
+      code: "MEDIA_DETAILS_FAILED",
+      originalError: error,
+    } as SearchError;
+  }
 }
-

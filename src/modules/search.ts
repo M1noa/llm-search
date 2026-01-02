@@ -16,7 +16,6 @@ export async function search(query: string, options: ScraperOptions = {}): Promi
   try {
     return await searchDuckDuckGo(query, options);
   } catch (err) {
-    console.warn("DuckDuckGo search failed, falling back to Google...", err instanceof Error ? err.message : String(err));
     errors.push(err);
   }
 
@@ -24,7 +23,6 @@ export async function search(query: string, options: ScraperOptions = {}): Promi
   try {
     return await searchGoogle(query, options);
   } catch (err) {
-    console.warn("Google search failed, falling back to SearxNG...", err instanceof Error ? err.message : String(err));
     errors.push(err);
   }
 
@@ -32,7 +30,6 @@ export async function search(query: string, options: ScraperOptions = {}): Promi
   try {
     return await searchSearxNG(query, options);
   } catch (err) {
-    console.warn("SearxNG search failed", err instanceof Error ? err.message : String(err));
     errors.push(err);
   }
 

@@ -233,7 +233,7 @@ export async function searchGoogle(query: string, options: ScraperOptions = {}):
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         if (errorMessage === "Bot protection detected" && mergedOptions.antiBot?.enabled) {
-          console.warn("Bot protection detected, falling back to Puppeteer...");
+          // console.warn("Bot protection detected, falling back to Puppeteer...");
         } else {
           throw error;
         }

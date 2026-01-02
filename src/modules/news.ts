@@ -13,10 +13,6 @@ export async function searchNews(query: string, options: ScraperOptions = {}): P
   try {
     return await searchGoogleNews(query, options);
   } catch (err) {
-    console.warn(
-      "Google News search failed, falling back to DuckDuckGo...",
-      err instanceof Error ? err.message : String(err),
-    );
     errors.push(err);
   }
 
@@ -31,7 +27,6 @@ export async function searchNews(query: string, options: ScraperOptions = {}): P
       source: "duckduckgo-news",
     }));
   } catch (err) {
-    console.warn("DuckDuckGo News search failed", err instanceof Error ? err.message : String(err));
     errors.push(err);
   }
 

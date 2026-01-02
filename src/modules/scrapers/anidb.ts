@@ -1,10 +1,5 @@
 import { MediaResult, MediaSearchOptions, SearchError } from "../../types";
-import {
-  parseProxyConfig,
-  createStealthBrowser,
-  createRealisticHeaders,
-  getCacheKey,
-} from "../common";
+import { parseProxyConfig, createStealthBrowser, createRealisticHeaders, getCacheKey } from "../common";
 import { JSDOM } from "jsdom";
 
 // AniDB requires stricter rate limiting to avoid bans
@@ -26,10 +21,7 @@ async function enforceRateLimit() {
  * AniDB has strict anti-bot protection ("AntiLeech").
  * We must use Puppeteer with Stealth plugin and respect rate limits.
  */
-export async function searchAniDB(
-  query: string,
-  options: MediaSearchOptions = {}
-): Promise<MediaResult[]> {
+export async function searchAniDB(query: string, options: MediaSearchOptions = {}): Promise<MediaResult[]> {
   try {
     await enforceRateLimit();
 
@@ -72,11 +64,11 @@ async function scrapeAniDBWithPuppeteer(url: string, options: MediaSearchOptions
       // Check if we got a single result redirect (AniDB sometimes redirects directly to the anime page)
       const currentUrl = page.url();
       if (currentUrl.includes("/anime/") && !currentUrl.includes("adb.search")) {
-         // Single result found
-         const html = await page.content();
-         const dom = new JSDOM(html);
-         const singleResult = parseAniDBSinglePage(dom.window.document, currentUrl);
-         return singleResult ? [singleResult] : [];
+        // Single result found
+        const html = await page.content();
+        const dom = new JSDOM(html);
+        const singleResult = parseAniDBSinglePage(dom.window.document, currentUrl);
+        return singleResult ? [singleResult] : [];
       }
       return [];
     }
@@ -96,22 +88,21 @@ export async function getAniDBDetails(url: string, options: MediaSearchOptions =
     const browser = await createStealthBrowser(proxy || undefined);
 
     try {
-        const page = await browser.newPage();
-        await page.setViewport({ width: 1920, height: 1080 });
-        await page.setExtraHTTPHeaders(createRealisticHeaders());
+      const page = await browser.newPage();
+      await page.setViewport({ width: 1920, height: 1080 });
+      await page.setExtraHTTPHeaders(createRealisticHeaders());
 
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
-        const html = await page.content();
-        const dom = new JSDOM(html);
-        const result = parseAniDBSinglePage(dom.window.document, url);
+      await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
+      const html = await page.content();
+      const dom = new JSDOM(html);
+      const result = parseAniDBSinglePage(dom.window.document, url);
 
-        return result || {};
+      return result || {};
     } finally {
-        await browser.close();
+      await browser.close();
     }
   } catch (e) {
-      console.warn("AniDB details fetch failed", e);
-      return {};
+    return {};
   }
 }
 
@@ -147,7 +138,7 @@ function parseAniDBList(doc: Document): MediaResult[] {
         rating,
         description: type ? `Type: ${type}` : undefined,
         source: "anidb",
-        mediaType: "anime"
+        mediaType: "anime",
       });
     }
   });
@@ -156,27 +147,27 @@ function parseAniDBList(doc: Document): MediaResult[] {
 }
 
 function parseAniDBSinglePage(doc: Document, url: string): MediaResult | null {
-    // Parse a specific anime page if we get redirected there
-    const titleEl = doc.querySelector("h1.anime");
-    if (!titleEl) return null;
+  // Parse a specific anime page if we get redirected there
+  const titleEl = doc.querySelector("h1.anime");
+  if (!titleEl) return null;
 
-    const title = titleEl.textContent?.replace("Anime:", "").trim() || "";
-    const descriptionEl = doc.querySelector("div.desc");
-    const ratingEl = doc.querySelector("tr.rating td.value");
-    const imgEl = doc.querySelector("div.image img");
+  const title = titleEl.textContent?.replace("Anime:", "").trim() || "";
+  const descriptionEl = doc.querySelector("div.desc");
+  const ratingEl = doc.querySelector("tr.rating td.value");
+  const imgEl = doc.querySelector("div.image img");
 
-    let posterUrl = imgEl?.getAttribute("src") || undefined;
-    if (posterUrl && !posterUrl.startsWith("http")) {
-        posterUrl = `https://anidb.net${posterUrl}`;
-    }
+  let posterUrl = imgEl?.getAttribute("src") || undefined;
+  if (posterUrl && !posterUrl.startsWith("http")) {
+    posterUrl = `https://anidb.net${posterUrl}`;
+  }
 
-    return {
-        title,
-        url,
-        description: descriptionEl?.textContent?.trim(),
-        rating: ratingEl?.textContent?.trim(),
-        posterUrl,
-        source: "anidb",
-        mediaType: "anime"
-    };
+  return {
+    title,
+    url,
+    description: descriptionEl?.textContent?.trim(),
+    rating: ratingEl?.textContent?.trim(),
+    posterUrl,
+    source: "anidb",
+    mediaType: "anime",
+  };
 }

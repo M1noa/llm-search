@@ -22,10 +22,7 @@ async function enforceRateLimit() {
   lastSearchTime = Date.now();
 }
 
-export async function searchTMDB(
-  query: string,
-  options: MediaSearchOptions = {}
-): Promise<MediaResult[]> {
+export async function searchTMDB(query: string, options: MediaSearchOptions = {}): Promise<MediaResult[]> {
   try {
     await enforceRateLimit();
 
@@ -47,12 +44,10 @@ export async function searchTMDB(
     } catch (e) {
       // Fallback to puppeteer below
       if (mergedOptions.forcePuppeteer) throw e;
-      console.warn("TMDB fetch failed, falling back to Puppeteer", e);
     }
 
     // Fallback to Puppeteer
     return await scrapeTMDBWithPuppeteer(searchUrl, mergedOptions);
-
   } catch (error) {
     throw {
       message: "TMDB search failed",
@@ -83,10 +78,10 @@ async function scrapeTMDBWithPuppeteer(url: string, options: MediaSearchOptions)
 
     // Wait for results
     try {
-        await page.waitForSelector(".card", { timeout: 5000 });
+      await page.waitForSelector(".card", { timeout: 5000 });
     } catch (e) {
-        // No results found or timeout
-        return [];
+      // No results found or timeout
+      return [];
     }
 
     const html = await page.content();
@@ -120,7 +115,7 @@ function parseTMDBResults(doc: Document): MediaResult[] {
 
       let posterUrl = (imgEl as HTMLImageElement)?.src || imgEl?.getAttribute("data-src") || undefined;
       if (posterUrl && !posterUrl.startsWith("http")) {
-          posterUrl = `https://www.themoviedb.org${posterUrl}`;
+        posterUrl = `https://www.themoviedb.org${posterUrl}`;
       }
 
       // Determine type from URL if possible
@@ -137,7 +132,7 @@ function parseTMDBResults(doc: Document): MediaResult[] {
         releaseDate,
         posterUrl,
         source: "tmdb",
-        mediaType
+        mediaType,
       });
     }
   });
@@ -148,56 +143,55 @@ function parseTMDBResults(doc: Document): MediaResult[] {
 // Separate function to get details including cast and providers
 // This would be called if the user asks for specific details on a result
 export async function getTMDBDetails(url: string, options: MediaSearchOptions = {}): Promise<Partial<MediaResult>> {
-    // This function visits the detail page to get cast, genres, rating, providers
-    try {
-        const { body } = await fetchWithDetection(url, options);
-        const dom = new JSDOM(body);
-        const doc = dom.window.document;
+  // This function visits the detail page to get cast, genres, rating, providers
+  try {
+    const { body } = await fetchWithDetection(url, options);
+    const dom = new JSDOM(body);
+    const doc = dom.window.document;
 
-        // Rating
-        const ratingEl = doc.querySelector(".user_score_chart");
-        const rating = ratingEl?.getAttribute("data-percent") ? `${ratingEl.getAttribute("data-percent")}%` : undefined;
+    // Rating
+    const ratingEl = doc.querySelector(".user_score_chart");
+    const rating = ratingEl?.getAttribute("data-percent") ? `${ratingEl.getAttribute("data-percent")}%` : undefined;
 
-        // Genres
-        const genres: string[] = [];
-        doc.querySelectorAll(".genres a").forEach(el => {
-            if (el.textContent) genres.push(el.textContent.trim());
-        });
+    // Genres
+    const genres: string[] = [];
+    doc.querySelectorAll(".genres a").forEach((el) => {
+      if (el.textContent) genres.push(el.textContent.trim());
+    });
 
-        // Cast
-        const cast: string[] = [];
-        doc.querySelectorAll(".people.scroller li.card p a").forEach(el => {
-            if (el.textContent) cast.push(el.textContent.trim());
-        });
+    // Cast
+    const cast: string[] = [];
+    doc.querySelectorAll(".people.scroller li.card p a").forEach((el) => {
+      if (el.textContent) cast.push(el.textContent.trim());
+    });
 
-        // Watch Providers (This is tricky as it's often loaded dynamically or in a separate section)
-        // TMDB often lists them in a section called "Where to Watch" or similar,
-        // but the actual data might be fetched via API or hidden.
-        // For basic scraping, we check for provider logos/links if visible.
-        const watchProviders: { name: string, type: "stream" | "rent" | "buy" }[] = [];
+    // Watch Providers (This is tricky as it's often loaded dynamically or in a separate section)
+    // TMDB often lists them in a section called "Where to Watch" or similar,
+    // but the actual data might be fetched via API or hidden.
+    // For basic scraping, we check for provider logos/links if visible.
+    const watchProviders: { name: string; type: "stream" | "rent" | "buy" }[] = [];
 
-        // Check for provider list containers (provider structure varies)
-        const providerSections = doc.querySelectorAll(".provider");
-        providerSections.forEach(section => {
-             const img = section.querySelector("img");
-             if (img) {
-                 const name = img.getAttribute("alt") || "";
-                 if (name) {
-                    // Heuristic to guess type usually requires more context, defaulting to stream
-                    watchProviders.push({ name, type: "stream" });
-                 }
-             }
-        });
+    // Check for provider list containers (provider structure varies)
+    const providerSections = doc.querySelectorAll(".provider");
+    providerSections.forEach((section) => {
+      const img = section.querySelector("img");
+      if (img) {
+        const name = img.getAttribute("alt") || "";
+        if (name) {
+          // Heuristic to guess type usually requires more context, defaulting to stream
+          watchProviders.push({ name, type: "stream" });
+        }
+      }
+    });
 
-        return {
-            rating,
-            genres,
-            cast,
-            watchProviders: watchProviders.length > 0 ? watchProviders : undefined
-        };
-
-    } catch (e) {
-        console.warn("Failed to get TMDB details", e);
-        return {};
-    }
+    return {
+      rating,
+      genres,
+      cast,
+      watchProviders: watchProviders.length > 0 ? watchProviders : undefined,
+    };
+  } catch (e) {
+    // console.warn("Failed to get TMDB details", e);
+    return {};
+  }
 }

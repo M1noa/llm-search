@@ -130,4 +130,9 @@ dist
 .pnp.*
 
 
+
+# Tesseract training data
+*.traineddata
+
+# Local History
 .history

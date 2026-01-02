@@ -25,7 +25,3 @@ export const AUTHOR = "Minoa";
 // default config
 export const DEFAULT_TIMEOUT = 10000;
 export const DEFAULT_LIMIT = 10;
-
-// debug info
-console.debug("llm-kit initialized... lets find some stuff!");
-console.debug(`version: ${VERSION}`);

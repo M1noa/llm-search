@@ -264,7 +264,6 @@ async function parseDOCX(buffer: Buffer): Promise<ParseResult> {
       };
     });
   } catch (error) {
-    console.error("DOCX parsing error:", error);
     throw {
       message: "Failed to parse DOCX file",
       code: "DOCX_PARSE_ERROR",
