@@ -13,7 +13,8 @@
       "WebFetch(domain:anidb.net)",
       "WebFetch(domain:thetvdb.com)",
       "Skill(git:checkout)",
-      "Skill(git:commit)"
+      "Skill(git:commit)",
+      "Skill(git:push)"
     ]
   }
 }

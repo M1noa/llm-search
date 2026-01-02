@@ -79,12 +79,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/m1noa/llm-kit.git"
+    "url": "git+https://gitlab.com/m1noa/llm-search.git"
   },
   "bugs": {
-    "url": "https://gitlab.com/m1noa/llm-kit/issues"
+    "url": "https://gitlab.com/m1noa/llm-search/issues"
   },
-  "homepage": "https://gitlab.com/m1noa/llm-kit#readme",
+  "homepage": "https://gitlab.com/m1noa/llm-search#readme",
   "files": [
     "dist",
     "LICENSE",
