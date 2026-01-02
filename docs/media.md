@@ -9,7 +9,7 @@ The media search module provides unified access to metadata from **TMDB**, **The
 Main function that orchestrates the search based on the requested media type.
 
 ```typescript
-import { searchMedia } from "llm-kit";
+import { searchMedia } from "llm-search-tools";
 
 // General search (defaults to TMDB -> TheTVDB)
 const results = await searchMedia("Breaking Bad");

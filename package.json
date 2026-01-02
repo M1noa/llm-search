@@ -1,5 +1,5 @@
 {
-  "name": "llm-kit",
+  "name": "llm-search-tools",
   "version": "1.1.0",
   "description": "A Node.js module for searching and scraping web content, designed for LLMs but useful for any project where webscraping is needed!",
   "main": "dist/index.js",

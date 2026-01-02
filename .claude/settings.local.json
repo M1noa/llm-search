@@ -14,7 +14,8 @@
       "WebFetch(domain:thetvdb.com)",
       "Skill(git:checkout)",
       "Skill(git:commit)",
-      "Skill(git:push)"
+      "Skill(git:push)",
+      "Skill(git:status)"
     ]
   }
 }

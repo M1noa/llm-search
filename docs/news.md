@@ -12,7 +12,7 @@ Main news search function that orchestrates multiple providers for resilience:
 2. **DuckDuckGo News** (Fallback source)
 
 ```typescript
-import { searchNews } from "llm-kit";
+import { searchNews } from "llm-search-tools";
 
 const results = await searchNews("technology trends", {
     limit: 10,
@@ -25,7 +25,7 @@ const results = await searchNews("technology trends", {
 Search using Google News specifically. Uses the `google-news-scraper` library.
 
 ```typescript
-import { searchGoogleNews } from "llm-kit";
+import { searchGoogleNews } from "llm-search-tools";
 
 const results = await searchGoogleNews("AI developments");
 ```
