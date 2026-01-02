@@ -5,7 +5,7 @@ The events module enables searching for real-world events (concerts, festivals, 
 ## Usage
 
 ```typescript
-import { searchEvents } from "llm-kit";
+import { searchEvents } from "llm-search";
 
 const results = await searchEvents("concerts in Tokyo");
 

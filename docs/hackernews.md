@@ -9,7 +9,7 @@ Get the latest tech news and discussions from Hacker News.
 Get the current top stories.
 
 ```typescript
-import { getTopStories } from 'llm-kit';
+import { getTopStories } from 'llm-search';
 
 const stories = await getTopStories(10);
 ```
@@ -19,7 +19,7 @@ const stories = await getTopStories(10);
 Get the newest stories.
 
 ```typescript
-import { getNewStories } from 'llm-kit';
+import { getNewStories } from 'llm-search';
 
 const stories = await getNewStories(10);
 ```
@@ -29,7 +29,7 @@ const stories = await getNewStories(10);
 Get the best stories of all time.
 
 ```typescript
-import { getBestStories } from 'llm-kit';
+import { getBestStories } from 'llm-search';
 
 const stories = await getBestStories(10);
 ```
@@ -39,7 +39,7 @@ const stories = await getBestStories(10);
 Get "Ask HN" posts.
 
 ```typescript
-import { getAskStories } from 'llm-kit';
+import { getAskStories } from 'llm-search';
 
 const stories = await getAskStories(10);
 ```
@@ -49,7 +49,7 @@ const stories = await getAskStories(10);
 Get "Show HN" posts.
 
 ```typescript
-import { getShowStories } from 'llm-kit';
+import { getShowStories } from 'llm-search';
 
 const stories = await getShowStories(10);
 ```
@@ -59,7 +59,7 @@ const stories = await getShowStories(10);
 Get job postings.
 
 ```typescript
-import { getJobStories } from 'llm-kit';
+import { getJobStories } from 'llm-search';
 
 const stories = await getJobStories(10);
 ```
@@ -69,7 +69,7 @@ const stories = await getJobStories(10);
 Get a specific story by its ID.
 
 ```typescript
-import { getStoryById } from 'llm-kit';
+import { getStoryById } from 'llm-search';
 
 const story = await getStoryById(123456);
 ```

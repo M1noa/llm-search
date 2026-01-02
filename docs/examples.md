@@ -1,11 +1,11 @@
 # Examples 📚
 
-Here are some examples of how to use llm-kit in different scenarios.
+Here are some examples of how to use llm-search in different scenarios.
 
 ## Basic Search Example
 
 ```typescript
-import { search, wikiSearch, getWebpageContent } from 'llm-kit';
+import { search, wikiSearch, getWebpageContent } from 'llm-search';
 
 async function searchAndGetContent() {
   try {
@@ -27,7 +27,7 @@ async function searchAndGetContent() {
 ## Wikipedia Research Example
 
 ```typescript
-import { wikiSearch, wikiGetContent, wikiGetSummary } from 'llm-kit';
+import { wikiSearch, wikiGetContent, wikiGetSummary } from 'llm-search';
 
 async function researchTopic() {
   try {
@@ -51,7 +51,7 @@ async function researchTopic() {
 ## HackerNews Feed Example
 
 ```typescript
-import { getTopStories, getBestStories, getStoryById } from 'llm-kit';
+import { getTopStories, getBestStories, getStoryById } from 'llm-search';
 
 async function getHNFeed() {
   try {
@@ -76,7 +76,7 @@ async function getHNFeed() {
 ## Webpage Content Extraction Example
 
 ```typescript
-import { getWebpageContent, getWebpageText, isUrlAccessible } from 'llm-kit';
+import { getWebpageContent, getWebpageText, isUrlAccessible } from 'llm-search';
 
 async function extractContent(url: string) {
   try {
@@ -101,7 +101,7 @@ async function extractContent(url: string) {
 ## Multi-Source Research Example
 
 ```typescript
-import { search, wikiSearch, getWebpageContent, getTopStories } from 'llm-kit';
+import { search, wikiSearch, getWebpageContent, getTopStories } from 'llm-search';
 
 async function researchTopic(query: string) {
   try {
@@ -134,7 +134,7 @@ async function researchTopic(query: string) {
 ## Error Handling Example
 
 ```typescript
-import { search, SearchError } from 'llm-kit';
+import { search, SearchError } from 'llm-search';
 
 async function robustSearch(query: string) {
   try {

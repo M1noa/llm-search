@@ -1,11 +1,11 @@
-# Contributing to llm-kit
+# Contributing to llm-search
 
-Thank you for your interest in contributing to llm-kit! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to llm-search! This document provides guidelines and instructions for contributing to the project.
 
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://gitlab.com/m1noa/llm-kit.git`
+2. Clone your fork: `git clone https://gitlab.com/m1noa/llm-search.git`
 3. Install dependencies: `npm install`
 
 ## Development Guidelines

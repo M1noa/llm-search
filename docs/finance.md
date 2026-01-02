@@ -9,7 +9,7 @@ The finance module provides real-time stock quotes and financial market data usi
 Main finance function that retrieves stock quotes. Currently backed by Yahoo Finance.
 
 ```typescript
-import { getQuote } from "llm-kit";
+import { getQuote } from "llm-search";
 
 const quote = await getQuote("AAPL");
 console.log(`${quote.symbol}: $${quote.regularMarketPrice}`);
@@ -20,7 +20,7 @@ console.log(`${quote.symbol}: $${quote.regularMarketPrice}`);
 Direct access to the Yahoo Finance scraper.
 
 ```typescript
-import { getStockQuote } from "llm-kit";
+import { getStockQuote } from "llm-search";
 
 const quote = await getStockQuote("GOOGL");
 ```

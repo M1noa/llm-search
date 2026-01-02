@@ -17,7 +17,7 @@ The crawling module allows you to crawl websites to extract content from multipl
 ## Usage
 
 ```typescript
-import { crawl } from "llm-kit";
+import { crawl } from "llm-search";
 
 // Basic crawl (depth 2, max 10 pages)
 const results = await crawl("https://example.com");

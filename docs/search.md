@@ -13,7 +13,7 @@ Main search function that tries engines in sequence:
 3. **SearxNG** (Fallback to public instances)
 
 ```typescript
-import { search } from "llm-kit";
+import { search } from "llm-search";
 
 const results = await search("typescript tutorial", {
     limit: 5,
@@ -27,7 +27,7 @@ const results = await search("typescript tutorial", {
 Search using DuckDuckGo specifically. Uses HTML scraping with Puppeteer fallback.
 
 ```typescript
-import { searchDuckDuckGo } from "llm-kit";
+import { searchDuckDuckGo } from "llm-search";
 
 const results = await searchDuckDuckGo("typescript tutorial");
 ```
@@ -37,7 +37,7 @@ const results = await searchDuckDuckGo("typescript tutorial");
 Search using Google specifically.
 
 ```typescript
-import { searchGoogle } from "llm-kit";
+import { searchGoogle } from "llm-search";
 
 const results = await searchGoogle("typescript tutorial");
 ```
@@ -47,7 +47,7 @@ const results = await searchGoogle("typescript tutorial");
 Search using SearxNG (meta-search engine). Uses public instances by default or a custom instance.
 
 ```typescript
-import { searchSearxNG } from "llm-kit";
+import { searchSearxNG } from "llm-search";
 
 const results = await searchSearxNG("typescript tutorial", {
     searxngInstance: "https://searx.be",
