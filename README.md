@@ -239,6 +239,6 @@ This package uses these great libraries:
 
 MIT
 
-## Contributing [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](TODO.md)
+## Contributing [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](todo.md)
 
 Contributions VERY welcome!! Please read the [contributing guidelines](CONTRIBUTING.md) first.

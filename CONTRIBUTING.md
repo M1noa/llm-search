@@ -35,8 +35,8 @@ When adding new features or making changes:
 
 All new features must include tests:
 
-1. Add test cases to `src/test.ts`
-2. Include relevent test files in `/test/files` if needed (like for parsing)
+1. Add a new test file (e.g., `src/modules/myfeature.test.ts`) or add to existing test files
+2. Include relevant test files in `/test/files` if needed (like for parsing)
 3. Test error handling and edge cases
 4. Run tests before submitting: `npm test`
 5. Test with different Node.js versions if making platform-specific changes
@@ -55,7 +55,7 @@ When submitting a PR:
 1. Add file type to `FileType` type
 2. Create parsing function in `parser.ts`
 3. Add test file in `/test/files`
-4. Add test case in `test.ts`
+4. Add test case in the corresponding test file
 5. Update documentation
 6. Update README supported formats
 
