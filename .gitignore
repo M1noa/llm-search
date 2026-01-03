@@ -136,3 +136,6 @@ dist
 
 # Local History
 .history
+
+# Google Search State
+google-search-state*.json

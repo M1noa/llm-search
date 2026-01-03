@@ -226,7 +226,6 @@ This package uses these great libraries:
 - [@mozilla/readability](https://www.npmjs.com/package/@mozilla/readability) - Web content extraction
 - [csv-parse](https://www.npmjs.com/package/csv-parse) - CSV parsing
 - [fast-xml-parser](https://www.npmjs.com/package/fast-xml-parser) - XML parsing
-- [google-sr](https://www.npmjs.com/package/google-sr) - Google search
 - [google-news-scraper](https://www.npmjs.com/package/google-news-scraper) - Google News search
 - [jsdom](https://www.npmjs.com/package/jsdom) - DOM emulation for web scraping
 - [mammoth](https://www.npmjs.com/package/mammoth) - DOCX parsing

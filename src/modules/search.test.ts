@@ -1,10 +1,55 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { search, searchGoogle, searchDuckDuckGo, searchSearxNG } from "./search";
 import * as common from "./common";
-import { search as googleSrSearch } from "google-sr";
+import { chromium } from "playwright";
 
-// Mock dependencies
-vi.mock("google-sr");
+// Define strict types for mocks
+interface MockPage {
+  goto: Mock;
+  url: Mock;
+  $: Mock;
+  click: Mock;
+  keyboard: { type: Mock; press: Mock };
+  waitForTimeout: Mock;
+  waitForLoadState: Mock;
+  waitForSelector: Mock;
+  waitForNavigation: Mock;
+  evaluate: Mock;
+  addInitScript: Mock;
+  content: Mock;
+  close: Mock;
+  setViewport: Mock;
+  setExtraHTTPHeaders: Mock;
+}
+
+interface MockContext {
+  newPage: Mock;
+  addInitScript: Mock;
+  storageState: Mock;
+  close: Mock;
+}
+
+interface MockBrowser {
+  newContext: Mock;
+  close: Mock;
+  newPage?: Mock;
+}
+
+// Mock Playwright
+vi.mock("playwright", () => ({
+  chromium: {
+    launch: vi.fn(),
+  },
+  devices: {
+    "Desktop Chrome": {
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      viewport: { width: 1920, height: 1080 },
+    },
+  },
+}));
+
+// Mock Common Utils
 vi.mock("./common", async () => {
   const actual = await vi.importActual<typeof import("./common")>("./common");
   return {
@@ -12,27 +57,80 @@ vi.mock("./common", async () => {
     createStealthBrowser: vi.fn(),
     fetchWithDetection: vi.fn(),
     parseProxyConfig: vi.fn(),
+    debugLog: vi.fn(),
   };
 });
 
-// Mock the scrapers modules to test orchestration separately if needed,
-// but for now we are testing the full flow so we'll mock the low-level fetch/puppeteer.
-// actually, let's mock the implementation details (fetch/puppeteer) to test the scraper logic.
-
 describe("Search Module", () => {
+  let mockBrowser: MockBrowser;
+  let mockContext: MockContext;
+  let mockPage: MockPage;
+
   beforeEach(() => {
     vi.resetAllMocks();
     (common.parseProxyConfig as Mock).mockReturnValue(null);
+
+    // Setup Playwright mocks
+    mockPage = {
+      goto: vi.fn(),
+      url: vi.fn().mockReturnValue("https://www.google.com/search?q=test"),
+      $: vi.fn(),
+      click: vi.fn(),
+      keyboard: {
+        type: vi.fn(),
+        press: vi.fn(),
+      },
+      waitForTimeout: vi.fn(),
+      waitForLoadState: vi.fn(),
+      waitForSelector: vi.fn(),
+      waitForNavigation: vi.fn(),
+      evaluate: vi.fn(),
+      addInitScript: vi.fn(),
+      content: vi.fn(),
+      close: vi.fn(),
+      setViewport: vi.fn(),
+      setExtraHTTPHeaders: vi.fn(),
+    };
+
+    mockContext = {
+      newPage: vi.fn().mockResolvedValue(mockPage),
+      addInitScript: vi.fn(),
+      storageState: vi.fn(),
+      close: vi.fn(),
+    };
+
+    mockBrowser = {
+      newContext: vi.fn().mockResolvedValue(mockContext),
+      close: vi.fn(),
+      newPage: vi.fn().mockResolvedValue(mockPage),
+    };
+
+    (chromium.launch as Mock).mockResolvedValue(mockBrowser);
   });
 
   describe("searchGoogle", () => {
-    it("should return results using google-sr library", async () => {
-      const mockResults = [{ title: "Test Title", link: "https://example.com", description: "Test Snippet" }];
-      (googleSrSearch as Mock).mockResolvedValue(mockResults);
-      (common.fetchWithDetection as Mock).mockResolvedValue({ headers: {}, body: "html" });
+    it("should return results using Playwright", async () => {
+      const mockResults = [
+        {
+          title: "Test Title",
+          link: "https://example.com",
+          snippet: "Test Snippet",
+        },
+      ];
+
+      // Mock search input found
+      mockPage.$.mockResolvedValue({
+        click: vi.fn(),
+      });
+
+      // Mock evaluate returning results
+      mockPage.evaluate.mockResolvedValue(mockResults);
 
       const results = await searchGoogle("test query");
 
+      expect(chromium.launch).toHaveBeenCalled();
+      expect(mockPage.goto).toHaveBeenCalled();
+      expect(mockPage.evaluate).toHaveBeenCalled();
       expect(results).toHaveLength(1);
       expect(results[0]).toEqual({
         title: "Test Title",
@@ -42,38 +140,37 @@ describe("Search Module", () => {
       });
     });
 
-    it("should fallback to puppeteer if bot protection detected", async () => {
-      // Mock fetchWithDetection to throw bot protection error
-      const error = new Error("Bot protection detected");
-      (common.fetchWithDetection as Mock).mockRejectedValue(error);
+    it("should handle bot protection by retrying in headful mode", async () => {
+      // First attempt (headless) detects bot protection
+      mockPage.url
+        .mockReturnValueOnce("https://www.google.com/sorry/index") // First check
+        .mockReturnValue("https://www.google.com/search?q=test"); // Subsequent checks
 
-      // Mock puppeteer execution via createStealthBrowser
-      const mockPage = {
-        setViewport: vi.fn(),
-        setExtraHTTPHeaders: vi.fn(),
-        goto: vi.fn(),
-        waitForSelector: vi.fn(),
-        title: vi.fn().mockResolvedValue("Mock Title"),
-        content: vi.fn().mockResolvedValue("<html></html>"),
-        evaluate: vi
-          .fn()
-          .mockResolvedValue([
-            { title: "Puppeteer Title", url: "https://pup.com", snippet: "Pup Snippet", source: "google" },
-          ]),
-        close: vi.fn(),
-      };
-      const mockBrowser = {
-        newPage: vi.fn().mockResolvedValue(mockPage),
-        close: vi.fn(),
-      };
-      (common.createStealthBrowser as Mock).mockResolvedValue(mockBrowser);
+      // Mock evaluate results for the second attempt
+      const mockResults = [
+        {
+          title: "Headful Title",
+          link: "https://example.com/headful",
+          snippet: "Headful Snippet",
+        },
+      ];
+      mockPage.evaluate.mockResolvedValue(mockResults);
 
-      const results = await searchGoogle("test query", { antiBot: { enabled: true } });
+      // Mock search input found
+      mockPage.$.mockResolvedValue({
+        click: vi.fn(),
+      });
 
-      expect(results).toHaveLength(1);
-      expect(results[0].title).toBe("Puppeteer Title");
-      expect(common.createStealthBrowser).toHaveBeenCalled();
-      expect(mockBrowser.close).toHaveBeenCalled();
+      const results = await searchGoogle("test query");
+
+      // Should have launched browser twice
+      expect(chromium.launch).toHaveBeenCalledTimes(2);
+      // First launch headless
+      expect(chromium.launch).toHaveBeenNthCalledWith(1, expect.objectContaining({ headless: true }));
+      // Second launch headful (headless: false)
+      expect(chromium.launch).toHaveBeenNthCalledWith(2, expect.objectContaining({ headless: false }));
+
+      expect(results[0].title).toBe("Headful Title");
     });
   });
 
@@ -103,30 +200,17 @@ describe("Search Module", () => {
     });
 
     it("should fallback to puppeteer if HTML scraping fails or returns no results", async () => {
-      // Mock HTML scrape returning empty results (e.g. strict bot protection that returned valid HTML but no results)
+      // Mock HTML scrape returning empty results
       (common.fetchWithDetection as Mock).mockResolvedValue({
         headers: {},
         body: "<html><body>No results</body></html>",
       });
 
-      // Mock puppeteer
-      const mockPage = {
-        setViewport: vi.fn(),
-        setExtraHTTPHeaders: vi.fn(),
-        goto: vi.fn(),
-        waitForSelector: vi.fn(),
-        evaluate: vi
-          .fn()
-          .mockResolvedValue([
-            { title: "Puppeteer DDG", url: "https://ddg-pup.com", snippet: "Snippet", source: "duckduckgo" },
-          ]),
-        close: vi.fn(),
-      };
-      const mockBrowser = {
-        newPage: vi.fn().mockResolvedValue(mockPage),
-        close: vi.fn(),
-      };
+      // Mock puppeteer via createStealthBrowser
       (common.createStealthBrowser as Mock).mockResolvedValue(mockBrowser);
+      mockPage.evaluate.mockResolvedValue([
+        { title: "Puppeteer DDG", url: "https://ddg-pup.com", snippet: "Snippet", source: "duckduckgo" },
+      ]);
 
       // Use a unique query to avoid cache hit from previous test
       const results = await searchDuckDuckGo("test query fallback");
@@ -179,18 +263,14 @@ describe("Search Module", () => {
     it("should fallback to Google if DuckDuckGo fails", async () => {
       // Mock DDG failure (both HTML and Puppeteer)
       // 1. Fetch HTML -> throws error
-      // 2. Fallback to Puppeteer -> throws error
-      (common.fetchWithDetection as Mock)
-        .mockRejectedValueOnce(new Error("DDG Fetch Fail")) // DDG HTML
-        .mockResolvedValueOnce({ headers: {}, body: "google html" }); // Google Fetch (for next step)
+      (common.fetchWithDetection as Mock).mockRejectedValueOnce(new Error("DDG Fetch Fail"));
 
-      // Mock createStealthBrowser to throw for DDG puppeteer attempt to simulate full failure
+      // 2. Puppeteer -> throws error
       (common.createStealthBrowser as Mock).mockRejectedValueOnce(new Error("DDG Puppeteer Fail"));
 
-      // Mock Google Success
-      (googleSrSearch as Mock).mockResolvedValue([
-        { title: "Google", link: "https://google.com", description: "desc" },
-      ]);
+      // Mock Google Success (Playwright)
+      mockPage.$.mockResolvedValue({ click: vi.fn() });
+      mockPage.evaluate.mockResolvedValue([{ title: "Google", link: "https://google.com", snippet: "desc" }]);
 
       const results = await search("fallback");
       expect(results[0].source).toBe("google");
@@ -201,11 +281,11 @@ describe("Search Module", () => {
       (common.fetchWithDetection as Mock).mockRejectedValueOnce(new Error("DDG Fail"));
       (common.createStealthBrowser as Mock).mockRejectedValueOnce(new Error("DDG Puppeteer Fail"));
 
-      // Fail Google (Fetch + Puppeteer)
-      (common.fetchWithDetection as Mock).mockRejectedValueOnce(new Error("Google Fail"));
-      (common.createStealthBrowser as Mock).mockRejectedValueOnce(new Error("Google Puppeteer Fail"));
+      // Fail Google (Playwright)
+      (chromium.launch as Mock).mockRejectedValueOnce(new Error("Google Playwright Fail"));
 
       // SearxNG Success
+      // Note: fetchWithDetection is called for SearxNG. We need to queue strict return values or use mock implementation
       (common.fetchWithDetection as Mock).mockResolvedValueOnce({
         headers: {},
         body: JSON.stringify({ results: [{ title: "Searx", url: "https://s.com", content: "c" }] }),

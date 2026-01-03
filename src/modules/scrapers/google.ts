@@ -1,13 +1,457 @@
-import { search as googleSearch, OrganicResult, type OrganicResultNode } from "google-sr";
+import { chromium, devices, BrowserContextOptions, Browser } from "playwright";
 import { ScraperOptions, SearchResult, SearchError, ImageResult } from "../../types";
-import {
-  parseProxyConfig,
-  createStealthBrowser,
-  fetchWithDetection,
-  createRealisticHeaders,
-  getCacheKey,
-  debugLog,
-} from "../common";
+import { debugLog } from "../common";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+
+// Internal interfaces adapted from the source
+interface FingerprintConfig {
+  deviceName: string;
+  locale: string;
+  timezoneId: string;
+  colorScheme: "dark" | "light";
+  reducedMotion: "reduce" | "no-preference";
+  forcedColors: "active" | "none";
+}
+
+interface SavedState {
+  fingerprint?: FingerprintConfig;
+  googleDomain?: string;
+}
+
+interface RawScrapeResult {
+  title: string;
+  link: string;
+  snippet: string;
+  imageUrl?: string;
+  thumbnailUrl?: string;
+}
+
+/**
+ * Get the host machine's actual configuration to mimic real user behavior
+ */
+function getHostMachineConfig(userLocale?: string): FingerprintConfig {
+  const systemLocale = userLocale || process.env.LANG || "en-US";
+  const timezoneOffset = new Date().getTimezoneOffset();
+  let timezoneId = "America/New_York";
+
+  // Infer timezone from offset
+  if (timezoneOffset <= -480 && timezoneOffset > -600) timezoneId = "Asia/Shanghai";
+  else if (timezoneOffset <= -540) timezoneId = "Asia/Tokyo";
+  else if (timezoneOffset <= -420 && timezoneOffset > -480) timezoneId = "Asia/Bangkok";
+  else if (timezoneOffset <= 0 && timezoneOffset > -60) timezoneId = "Europe/London";
+  else if (timezoneOffset <= 60 && timezoneOffset > 0) timezoneId = "Europe/Berlin";
+  else if (timezoneOffset <= 300 && timezoneOffset > 240) timezoneId = "America/New_York";
+
+  const hour = new Date().getHours();
+  const colorScheme = hour >= 19 || hour < 7 ? "dark" : "light";
+
+  const platform = os.platform();
+  let deviceName = "Desktop Chrome";
+  if (platform === "darwin") deviceName = "Desktop Safari";
+  else if (platform === "win32") deviceName = "Desktop Edge";
+  else if (platform === "linux") deviceName = "Desktop Firefox";
+
+  // Default to Chrome as in source
+  deviceName = "Desktop Chrome";
+
+  return {
+    deviceName,
+    locale: systemLocale,
+    timezoneId,
+    colorScheme,
+    reducedMotion: "no-preference",
+    forcedColors: "none",
+  };
+}
+
+export async function searchGoogle(query: string, options: ScraperOptions = {}): Promise<SearchResult[]> {
+  const limit = options.limit || 10;
+  const timeout = options.timeout || 60000;
+  const stateFile = path.resolve(process.cwd(), "google-search-state.json");
+  const noSaveState = false; // Could expose this in options later
+  const locale = "en-US"; // Default to English or infer from system
+
+  // Always start headless first
+  let useHeadless = true;
+
+  debugLog("GooglePlaywright", "Initializing browser...");
+
+  let storageState: string | undefined = undefined;
+  let savedState: SavedState = {};
+  const fingerprintFile = stateFile.replace(".json", "-fingerprint.json");
+
+  if (fs.existsSync(stateFile)) {
+    debugLog("GooglePlaywright", `Found browser state file: ${stateFile}`);
+    storageState = stateFile;
+    if (fs.existsSync(fingerprintFile)) {
+      try {
+        const fingerprintData = fs.readFileSync(fingerprintFile, "utf8");
+        savedState = JSON.parse(fingerprintData);
+      } catch (e) {
+        debugLog("GooglePlaywright", "Failed to load fingerprint config, creating new one");
+      }
+    }
+  }
+
+  const deviceList = ["Desktop Chrome", "Desktop Edge", "Desktop Firefox", "Desktop Safari"];
+
+  const googleDomains = [
+    "https://www.google.com",
+    "https://www.google.co.uk",
+    "https://www.google.ca",
+    "https://www.google.com.au",
+  ];
+
+  const getDeviceConfig = (): [string, any] => {
+    if (savedState.fingerprint?.deviceName && devices[savedState.fingerprint.deviceName]) {
+      return [savedState.fingerprint.deviceName, devices[savedState.fingerprint.deviceName]];
+    }
+    const randomDevice = deviceList[Math.floor(Math.random() * deviceList.length)];
+    return [randomDevice, devices[randomDevice]];
+  };
+
+  const getRandomDelay = (min: number, max: number) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  };
+
+  async function performSearch(headless: boolean): Promise<SearchResult[]> {
+    debugLog("GooglePlaywright", `Starting browser in ${headless ? "headless" : "headful"} mode`);
+
+    const browser = await chromium.launch({
+      headless,
+      timeout: timeout * 2,
+      args: [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-features=IsolateOrigins,site-per-process",
+        "--disable-site-isolation-trials",
+        "--disable-web-security",
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--disable-gpu",
+        "--hide-scrollbars",
+        "--mute-audio",
+        "--disable-background-networking",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-breakpad",
+        "--disable-component-extensions-with-background-pages",
+        "--disable-extensions",
+        "--disable-features=TranslateUI",
+        "--disable-ipc-flooding-protection",
+        "--disable-renderer-backgrounding",
+        "--enable-features=NetworkService,NetworkServiceInProcess",
+        "--force-color-profile=srgb",
+        "--metrics-recording-only",
+      ],
+      ignoreDefaultArgs: ["--enable-automation"],
+    });
+
+    const [deviceName, deviceConfig] = getDeviceConfig();
+    let contextOptions: BrowserContextOptions = { ...deviceConfig };
+
+    if (savedState.fingerprint) {
+      contextOptions = {
+        ...contextOptions,
+        locale: savedState.fingerprint.locale,
+        timezoneId: savedState.fingerprint.timezoneId,
+        colorScheme: savedState.fingerprint.colorScheme,
+        reducedMotion: savedState.fingerprint.reducedMotion,
+        forcedColors: savedState.fingerprint.forcedColors,
+      };
+    } else {
+      const hostConfig = getHostMachineConfig(locale);
+      if (hostConfig.deviceName !== deviceName) {
+        contextOptions = { ...devices[hostConfig.deviceName] };
+      }
+      contextOptions = {
+        ...contextOptions,
+        locale: hostConfig.locale,
+        timezoneId: hostConfig.timezoneId,
+        colorScheme: hostConfig.colorScheme,
+        reducedMotion: hostConfig.reducedMotion,
+        forcedColors: hostConfig.forcedColors,
+      };
+      savedState.fingerprint = hostConfig;
+    }
+
+    contextOptions = {
+      ...contextOptions,
+      permissions: ["geolocation", "notifications"],
+      acceptDownloads: true,
+      isMobile: false,
+      hasTouch: false,
+      javaScriptEnabled: true,
+    };
+
+    const context = await browser.newContext(storageState ? { ...contextOptions, storageState } : contextOptions);
+
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", { get: () => false });
+      Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3, 4, 5] });
+      Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] });
+      // @ts-ignore
+      window.chrome = { runtime: {}, loadTimes: function () {}, csi: function () {}, app: {} };
+
+      if (typeof WebGLRenderingContext !== "undefined") {
+        const getParameter = WebGLRenderingContext.prototype.getParameter;
+        WebGLRenderingContext.prototype.getParameter = function (parameter: number) {
+          if (parameter === 37445) return "Intel Inc.";
+          if (parameter === 37446) return "Intel Iris OpenGL Engine";
+          return getParameter.call(this, parameter);
+        };
+      }
+    });
+
+    const page = await context.newPage();
+    await page.addInitScript(() => {
+      Object.defineProperty(window.screen, "width", { get: () => 1920 });
+      Object.defineProperty(window.screen, "height", { get: () => 1080 });
+      Object.defineProperty(window.screen, "colorDepth", { get: () => 24 });
+      Object.defineProperty(window.screen, "pixelDepth", { get: () => 24 });
+    });
+
+    try {
+      let selectedDomain: string;
+      if (savedState.googleDomain) {
+        selectedDomain = savedState.googleDomain;
+      } else {
+        selectedDomain = googleDomains[Math.floor(Math.random() * googleDomains.length)];
+        savedState.googleDomain = selectedDomain;
+      }
+
+      const isImageSearch = options.category === "images";
+      let navigationUrl = selectedDomain;
+
+      if (isImageSearch) {
+        navigationUrl = `${selectedDomain}/search?q=${encodeURIComponent(query)}&tbm=isch`;
+        debugLog("GooglePlaywright", `Navigating to image search: ${navigationUrl}`);
+      } else {
+        debugLog("GooglePlaywright", `Navigating to ${selectedDomain}`);
+      }
+
+      const response = await page.goto(navigationUrl, { timeout, waitUntil: "networkidle" });
+
+      const currentUrl = page.url();
+      const sorryPatterns = ["google.com/sorry", "recaptcha", "captcha", "unusual traffic"];
+      const isBlockedPage = sorryPatterns.some((p) => currentUrl.includes(p) || response?.url().includes(p));
+
+      if (isBlockedPage) {
+        if (headless) {
+          debugLog("GooglePlaywright", "Bot detection triggered in headless mode. Restarting in headful mode...");
+          await browser.close();
+          return performSearch(false);
+        } else {
+          debugLog("GooglePlaywright", "Please solve CAPTCHA manually...");
+          await page.waitForNavigation({
+            timeout: timeout * 2,
+            url: (url) => sorryPatterns.every((p) => !url.toString().includes(p)),
+          });
+          debugLog("GooglePlaywright", "CAPTCHA solved, continuing...");
+        }
+      }
+
+      if (!isImageSearch) {
+        // Handle search input for text search
+        const searchInputSelectors = [
+          "textarea[name='q']",
+          "input[name='q']",
+          "textarea[title='Search']",
+          "input[aria-label='Search']",
+        ];
+        let searchInput = null;
+        for (const selector of searchInputSelectors) {
+          searchInput = await page.$(selector);
+          if (searchInput) break;
+        }
+
+        if (!searchInput) throw new Error("Could not find search input");
+
+        await searchInput.click();
+        await page.keyboard.type(query, { delay: getRandomDelay(10, 30) });
+        await page.waitForTimeout(getRandomDelay(100, 300));
+        await page.keyboard.press("Enter");
+
+        debugLog("GooglePlaywright", "Waiting for results...");
+        await page.waitForLoadState("networkidle", { timeout });
+      }
+
+      // Check for block after search
+      if (sorryPatterns.some((p) => page.url().includes(p))) {
+        if (headless) {
+          debugLog("GooglePlaywright", "Bot detection after search. Restarting headful...");
+          await browser.close();
+          return performSearch(false);
+        } else {
+          debugLog("GooglePlaywright", "Please solve CAPTCHA...");
+          await page.waitForNavigation({
+            timeout: timeout * 2,
+            url: (url) => sorryPatterns.every((p) => !url.toString().includes(p)),
+          });
+        }
+      }
+
+      // Wait for results
+      const resultSelectors = isImageSearch
+        ? ["div.isv-r", "div[data-ri]"]
+        : ["#search", "#rso", ".g", "div[role='main']"];
+
+      let resultsFound = false;
+      for (const selector of resultSelectors) {
+        try {
+          await page.waitForSelector(selector, { timeout: 5000 });
+          resultsFound = true;
+          break;
+        } catch (e) {}
+      }
+
+      if (!resultsFound && headless) {
+        // If no results in headless, might be a subtle block
+        debugLog("GooglePlaywright", "No results found in headless. Retrying headful...");
+        await browser.close();
+        return performSearch(false);
+      }
+
+      // Extract results
+      const results = await page.evaluate<RawScrapeResult[], { maxResults: number; isImageSearch: boolean }>(
+        ({ maxResults, isImageSearch }: { maxResults: number; isImageSearch: boolean }) => {
+          if (isImageSearch) {
+            interface ScrapedImage {
+              title: string;
+              link: string;
+              imageUrl: string;
+              thumbnailUrl: string;
+              snippet: string;
+            }
+            const items: ScrapedImage[] = [];
+            const containers = document.querySelectorAll("div.isv-r");
+
+            for (const container of containers) {
+              if (items.length >= maxResults) break;
+
+              const linkAnchor = container.querySelector("a[jsname='UYbX3']") as HTMLAnchorElement;
+              const imgElement = container.querySelector("img") as HTMLImageElement;
+
+              if (!linkAnchor || !imgElement) continue;
+
+              const title = linkAnchor.getAttribute("title") || linkAnchor.innerText || "Image result";
+              const url = linkAnchor.href;
+              const thumbnailUrl = imgElement.src;
+              // Use thumbnail as imageUrl if we can't get better resolution easily without interaction
+              const imageUrl = thumbnailUrl;
+
+              if (url && imageUrl) {
+                items.push({
+                  title,
+                  link: url,
+                  imageUrl,
+                  thumbnailUrl,
+                  snippet: title,
+                });
+              }
+            }
+            return items;
+          }
+
+          interface ScrapedText {
+            title: string;
+            link: string;
+            snippet: string;
+          }
+          const items: ScrapedText[] = [];
+          const seenUrls = new Set<string>();
+
+          const selectorSets = [
+            { container: "#search div[data-hveid]", title: "h3", snippet: ".VwiC3b" },
+            { container: "#rso div[data-hveid]", title: "h3", snippet: '[data-sncf="1"]' },
+            { container: ".g", title: "h3", snippet: 'div[style*="webkit-line-clamp"]' },
+            { container: "div[jscontroller][data-hveid]", title: "h3", snippet: 'div[role="text"]' },
+          ];
+
+          for (const selectors of selectorSets) {
+            if (items.length >= maxResults) break;
+            const containers = document.querySelectorAll(selectors.container);
+
+            for (const container of containers) {
+              if (items.length >= maxResults) break;
+              const titleEl = container.querySelector(selectors.title);
+              if (!titleEl) continue;
+
+              const title = (titleEl.textContent || "").trim();
+              let link = "";
+              const anchor = container.querySelector("a");
+              if (anchor) link = anchor.href;
+
+              if (!link || !link.startsWith("http") || seenUrls.has(link)) continue;
+
+              let snippet = "";
+              const snippetEl = container.querySelector(selectors.snippet);
+              if (snippetEl) snippet = (snippetEl.textContent || "").trim();
+              else {
+                // Fallback snippet
+                const textDivs = Array.from(container.querySelectorAll("div"));
+                const longText = textDivs.find((el) => !el.querySelector("h3") && (el.textContent || "").length > 20);
+                if (longText) snippet = (longText.textContent || "").trim();
+              }
+
+              if (title && link) {
+                items.push({ title, link, snippet });
+                seenUrls.add(link);
+              }
+            }
+          }
+          return items.slice(0, maxResults);
+        },
+        { maxResults: limit, isImageSearch },
+      );
+
+      debugLog("GooglePlaywright", `Found ${results.length} results`);
+
+      // Save state
+      if (!noSaveState) {
+        await context.storageState({ path: stateFile });
+        fs.writeFileSync(fingerprintFile, JSON.stringify(savedState, null, 2));
+      }
+
+      await browser.close();
+
+      // Map to SearchResult interface
+      return results.map((r) => {
+        if (isImageSearch) {
+          return {
+            title: r.title,
+            url: r.link,
+            snippet: r.snippet,
+            source: "google-images",
+            imageUrl: r.imageUrl,
+            thumbnailUrl: r.thumbnailUrl,
+          } as ImageResult;
+        }
+        return {
+          title: r.title,
+          url: r.link,
+          snippet: r.snippet,
+          source: "google",
+        };
+      });
+    } catch (error) {
+      debugLog("GooglePlaywright", `Error: ${error}`);
+      await browser.close();
+      throw {
+        message: "Google Playwright search failed",
+        code: "GOOGLE_SEARCH_ERROR",
+        originalError: error,
+      } as SearchError;
+    }
+  }
+
+  return performSearch(useHeadless);
+}
 
 /**
  * Extracts the "Answer Box" or "Featured Snippet" from the Google Search DOM
@@ -44,257 +488,4 @@ export function extractAnswerBox(doc: Document): string | undefined {
   }
 
   return undefined;
-}
-
-// Rate limiting parameters
-const GOOGLE_DELAY = 2000; // 2 seconds for Google
-let lastGoogleSearchTime = 0;
-
-// Cache for search results
-const searchCache = new Map<
-  string,
-  {
-    results: SearchResult[];
-    timestamp: number;
-    source: "google";
-  }
->();
-
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
-
-// Helper function to enforce rate limiting
-async function enforceRateLimit() {
-  const now = Date.now();
-  const timeSinceLastSearch = now - lastGoogleSearchTime;
-
-  if (timeSinceLastSearch < GOOGLE_DELAY) {
-    await new Promise((resolve) => setTimeout(resolve, GOOGLE_DELAY - timeSinceLastSearch));
-  }
-  lastGoogleSearchTime = Date.now();
-}
-
-// Search using Puppeteer
-async function searchWithPuppeteer(query: string, options: ScraperOptions): Promise<SearchResult[]> {
-  const proxy = parseProxyConfig(options.proxy);
-  const browser = await createStealthBrowser(proxy || undefined);
-  const page = await browser.newPage();
-
-  try {
-    // Set realistic viewport
-    await page.setViewport({ width: 1920, height: 1080 });
-
-    // Set extra headers
-    await page.setExtraHTTPHeaders(createRealisticHeaders());
-
-    if (options.category === "images") {
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`;
-      await page.goto(searchUrl, { waitUntil: "networkidle2" });
-
-      // Wait for image results
-      // Google images usually have div.isv-r or specific containers
-      try {
-        await page.waitForSelector("div[data-id], div.isv-r", { timeout: 10000 });
-      } catch (e) {
-        // continue, might be empty
-      }
-
-      const results = await page.evaluate((limit) => {
-        const items: ImageResult[] = [];
-        // Select image containers
-        const elements = document.querySelectorAll("div[data-id], div.isv-r");
-
-        for (let i = 0; i < Math.min(elements.length, limit || 20); i++) {
-          const el = elements[i];
-
-          // Title often in h3 or aria-label
-          const titleEl = el.querySelector("h3") || el.querySelector("[title]");
-          const title = titleEl?.textContent || titleEl?.getAttribute("title") || "Image";
-
-          // Source link (page containing image)
-          const linkEl = el.querySelector("a");
-          const url = (linkEl as HTMLAnchorElement)?.href || "";
-
-          // Thumbnail
-          const imgEl = el.querySelector("img");
-          const thumbnailUrl = imgEl?.src || imgEl?.getAttribute("data-src") || "";
-
-          // Full image URL is hard to get without clicking.
-          // Sometimes it's in a JSON blob in the page, but that's brittle.
-          // We will use the thumbnail as a fallback for imageUrl if we can't find better.
-          // For now, let's just use the thumbnail.
-
-          if (url && thumbnailUrl) {
-            items.push({
-              title,
-              url, // This is the source page URL
-              snippet: title,
-              imageUrl: thumbnailUrl, // Using thumbnail as image URL for now due to complexity
-              thumbnailUrl,
-              source: "google-images",
-            });
-          }
-        }
-        return items;
-      }, options.limit);
-
-      return results;
-    }
-
-    // Default Web Search
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-
-    await page.goto(searchUrl, { waitUntil: "networkidle2" });
-
-    // Debug: Check page title and potential blocking text
-    const pageTitle = await page.title();
-    debugLog("Google:Puppeteer", `Page Title: "${pageTitle}"`);
-    const pageContent = await page.content();
-    if (pageContent.includes("Before you continue")) {
-      debugLog("Google:Puppeteer", "Detected Consent Page");
-      // Try to click "Reject all" or "Accept all" if possible, or just fail
-      // For now, let's just fail so we don't timeout
-      throw new Error("Google Consent Page detected");
-    }
-    if (pageContent.includes("unusual traffic") || pageContent.includes("captcha")) {
-      debugLog("Google:Puppeteer", "Detected CAPTCHA/Traffic block");
-      throw new Error("Google CAPTCHA detected");
-    }
-
-    // Wait for results
-    try {
-      debugLog("Google:Puppeteer", "Waiting for selector div.g");
-      await page.waitForSelector("div.g", { timeout: options.timeout || 10000 });
-    } catch (e) {
-      debugLog("Google:Puppeteer", "waitForSelector failed or timed out");
-      // Take a screenshot or dump html if possible/needed?
-      // For now just rethrow to let the outer catch handle it
-      throw e;
-    }
-
-    // Extract results
-    const results = await page.evaluate((limit) => {
-      const items: SearchResult[] = [];
-      const elements = document.querySelectorAll("div.g");
-
-      // console.log can be tricky inside evaluate, usually need on('console')
-      // but we can return debug info if we wanted.
-      // For now, let's just relax the selector if needed?
-
-      for (let i = 0; i < Math.min(elements.length, limit || 10); i++) {
-        const el = elements[i];
-        const titleEl = el.querySelector("h3");
-        const linkEl = el.querySelector("a");
-        const snippetEl = el.querySelector(".VwiC3b") || el.querySelector("div[style*='-webkit-line-clamp']"); // Fallback for snippet
-
-        if (titleEl && linkEl) {
-          items.push({
-            title: titleEl.textContent || "",
-            url: (linkEl as HTMLAnchorElement).href || "",
-            snippet: snippetEl?.textContent || "",
-            source: "google",
-          });
-        }
-      }
-
-      return items;
-    }, options.limit);
-
-    debugLog(
-      "Google:Puppeteer",
-      `Extracted ${results.length} items from ${await page.evaluate(() => document.querySelectorAll("div.g").length)} div.g elements`,
-    );
-
-    return results;
-  } finally {
-    await browser.close();
-  }
-}
-
-export async function searchGoogle(query: string, options: ScraperOptions = {}): Promise<SearchResult[]> {
-  try {
-    // Clone and merge options
-    const mergedOptions: ScraperOptions = {
-      limit: 10,
-      safeSearch: true,
-      timeout: 10000,
-      forcePuppeteer: false,
-      antiBot: {
-        enabled: true,
-        maxRetries: 3,
-        retryDelay: 2000,
-      },
-      ...options,
-    };
-
-    const cacheKey = getCacheKey(query, mergedOptions);
-    const cached = searchCache.get(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return cached.results;
-    }
-
-    await enforceRateLimit();
-
-    // Try basic fetch first unless Puppeteer is forced or we are searching for images
-    if (!mergedOptions.forcePuppeteer && mergedOptions.category !== "images") {
-      try {
-        debugLog("Google", "Trying basic fetch");
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-        await fetchWithDetection(searchUrl, mergedOptions);
-
-        // If no bot detection, use library
-        debugLog("Google", "Basic fetch passed detection, using google-sr");
-        const results: OrganicResultNode[] = await googleSearch({
-          query,
-          parsers: [OrganicResult],
-          noPartialResults: true,
-          requestConfig: { queryParams: { safe: "active" } },
-        });
-        debugLog("Google", `google-sr returned ${results.length} results`);
-
-        const formattedResults = results.map((r) => ({
-          title: r.title || "",
-          url: r.link || "",
-          snippet: r.description || "",
-          source: "google" as const,
-        }));
-
-        searchCache.set(cacheKey, {
-          results: formattedResults,
-          timestamp: Date.now(),
-          source: "google",
-        });
-
-        return formattedResults;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        debugLog("Google", `Basic fetch failed: ${errorMessage}`);
-        if (errorMessage === "Bot protection detected" && mergedOptions.antiBot?.enabled) {
-          // Silent fallback
-          debugLog("Google", "Falling back to Puppeteer");
-        } else {
-          throw error;
-        }
-      }
-    }
-
-    // Use Puppeteer as fallback
-    debugLog("Google", "Starting Puppeteer search");
-    const results = await searchWithPuppeteer(query, mergedOptions);
-    debugLog("Google", `Puppeteer returned ${results.length} results`);
-
-    searchCache.set(cacheKey, {
-      results,
-      timestamp: Date.now(),
-      source: "google",
-    });
-
-    return results;
-  } catch (error) {
-    throw {
-      message: "google search failed :(",
-      code: "GOOGLE_SEARCH_ERROR",
-      originalError: error,
-    } as SearchError;
-  }
 }

@@ -4,7 +4,53 @@ import { searchDuckDuckGo } from "./scrapers/duckduckgo";
 import { searchGoogle } from "./scrapers/google";
 import { searchSearxNG } from "./scrapers/searxng";
 import * as common from "./common";
-import type { Browser } from "puppeteer";
+import { chromium } from "playwright";
+
+// Define strict types for mocks
+interface MockPage {
+  goto: Mock;
+  url: Mock;
+  $: Mock;
+  click: Mock;
+  keyboard: { type: Mock; press: Mock };
+  waitForTimeout: Mock;
+  waitForLoadState: Mock;
+  waitForSelector: Mock;
+  waitForNavigation: Mock;
+  evaluate: Mock;
+  addInitScript: Mock;
+  content: Mock;
+  close: Mock;
+  setViewport: Mock;
+  setExtraHTTPHeaders: Mock;
+}
+
+interface MockContext {
+  newPage: Mock;
+  addInitScript: Mock;
+  storageState: Mock;
+  close: Mock;
+}
+
+interface MockBrowser {
+  newContext: Mock; // Playwright specific
+  newPage: Mock; // Puppeteer specific
+  close: Mock;
+}
+
+// Mock Playwright
+vi.mock("playwright", () => ({
+  chromium: {
+    launch: vi.fn(),
+  },
+  devices: {
+    "Desktop Chrome": {
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      viewport: { width: 1920, height: 1080 },
+    },
+  },
+}));
 
 // Mock common module
 vi.mock("./common", async () => {
@@ -13,50 +59,73 @@ vi.mock("./common", async () => {
     ...actual,
     createStealthBrowser: vi.fn(),
     fetchWithDetection: vi.fn(),
+    parseProxyConfig: vi.fn(),
+    debugLog: vi.fn(),
   };
 });
 
 describe("Image Search Integration", () => {
-  // Mock types
-  interface MockPage {
-    setViewport: Mock;
-    setExtraHTTPHeaders: Mock;
-    goto: Mock;
-    waitForSelector: Mock;
-    evaluate: Mock;
-    close: Mock;
-  }
-
-  interface MockBrowser {
-    newPage: Mock;
-    close: Mock;
-  }
-
-  let mockPage: MockPage;
   let mockBrowser: MockBrowser;
+  let mockContext: MockContext;
+  let mockPage: MockPage;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    (common.parseProxyConfig as Mock).mockReturnValue(null);
 
     mockPage = {
+      goto: vi.fn(),
+      url: vi.fn().mockReturnValue("https://www.google.com/search?q=test"),
+      $: vi.fn(),
+      click: vi.fn(),
+      keyboard: {
+        type: vi.fn(),
+        press: vi.fn(),
+      },
+      waitForTimeout: vi.fn(),
+      waitForLoadState: vi.fn(),
+      waitForSelector: vi.fn(),
+      waitForNavigation: vi.fn(),
+      evaluate: vi.fn(),
+      addInitScript: vi.fn(),
+      content: vi.fn(),
+      close: vi.fn(),
       setViewport: vi.fn(),
       setExtraHTTPHeaders: vi.fn(),
-      goto: vi.fn(),
-      waitForSelector: vi.fn(),
-      evaluate: vi.fn(),
+    };
+
+    mockContext = {
+      newPage: vi.fn().mockResolvedValue(mockPage),
+      addInitScript: vi.fn(),
+      storageState: vi.fn(),
       close: vi.fn(),
     };
 
     mockBrowser = {
-      newPage: vi.fn().mockResolvedValue(mockPage),
+      newContext: vi.fn().mockResolvedValue(mockContext), // For Playwright
+      newPage: vi.fn().mockResolvedValue(mockPage), // For Puppeteer
       close: vi.fn(),
     };
 
-    vi.spyOn(common, "createStealthBrowser").mockResolvedValue(mockBrowser as unknown as Browser);
+    // Setup Playwright mock
+    (chromium.launch as Mock).mockResolvedValue(mockBrowser);
+
+    // Setup Puppeteer mock
+    (common.createStealthBrowser as Mock).mockResolvedValue(mockBrowser);
   });
 
   it("should search google images correctly", async () => {
-    const mockImages = [
+    const rawResults = [
+      {
+        title: "Test Image",
+        link: "https://example.com/page",
+        snippet: "Test Image",
+        imageUrl: "https://example.com/image.jpg",
+        thumbnailUrl: "https://example.com/thumb.jpg",
+      },
+    ];
+
+    const expectedResults = [
       {
         title: "Test Image",
         url: "https://example.com/page",
@@ -67,16 +136,21 @@ describe("Image Search Integration", () => {
       },
     ];
 
-    mockPage.evaluate.mockResolvedValue(mockImages);
+    // Mock search input found for Playwright
+    mockPage.$.mockResolvedValue({
+      click: vi.fn(),
+    });
+
+    mockPage.evaluate.mockResolvedValue(rawResults);
 
     const results = await searchGoogle("cats", { category: "images" });
 
-    expect(common.createStealthBrowser).toHaveBeenCalled();
+    expect(chromium.launch).toHaveBeenCalled();
     expect(mockPage.goto).toHaveBeenCalledWith(
-      expect.stringContaining("google.com/search?q=cats&tbm=isch"),
+      expect.stringMatching(/google\.[a-z.]+\/search\?q=cats&tbm=isch/),
       expect.any(Object),
     );
-    expect(results).toEqual(mockImages);
+    expect(results).toEqual(expectedResults);
   });
 
   it("should search duckduckgo images correctly", async () => {
