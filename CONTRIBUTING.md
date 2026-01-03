@@ -1,6 +1,6 @@
-# Contributing to llm-search-tools
+# Contributing to llm-search
 
-Thank you for your interest in contributing to llm-search-tools! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to llm-search! This document provides guidelines and instructions for contributing to the project.
 
 ## Getting Started
 

@@ -6,6 +6,15 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 // Use stealth plugin
 puppeteer.use(StealthPlugin());
 
+// Debug logging configuration
+const DEBUG = process.env.DEBUG === "true" || process.env.NODE_ENV === "development";
+
+export function debugLog(component: string, message: string, ...args: unknown[]) {
+  if (DEBUG) {
+    console.log(`[DEBUG:${component}] ${message}`, ...args);
+  }
+}
+
 // Type guard for objects with entries method (Headers, Map, etc.)
 function hasEntries(value: unknown): value is { entries: () => IterableIterator<[string, string]> } {
   return (

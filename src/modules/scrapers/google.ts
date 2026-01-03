@@ -6,6 +6,7 @@ import {
   fetchWithDetection,
   createRealisticHeaders,
   getCacheKey,
+  debugLog,
 } from "../common";
 
 /**
@@ -146,25 +147,25 @@ async function searchWithPuppeteer(query: string, options: ScraperOptions): Prom
 
     // Debug: Check page title and potential blocking text
     const pageTitle = await page.title();
-    console.log(`DEBUG: Google (Puppeteer) - Page Title: "${pageTitle}"`);
+    debugLog("Google:Puppeteer", `Page Title: "${pageTitle}"`);
     const pageContent = await page.content();
     if (pageContent.includes("Before you continue")) {
-      console.log("DEBUG: Google (Puppeteer) - Detected Consent Page");
+      debugLog("Google:Puppeteer", "Detected Consent Page");
       // Try to click "Reject all" or "Accept all" if possible, or just fail
       // For now, let's just fail so we don't timeout
       throw new Error("Google Consent Page detected");
     }
     if (pageContent.includes("unusual traffic") || pageContent.includes("captcha")) {
-      console.log("DEBUG: Google (Puppeteer) - Detected CAPTCHA/Traffic block");
+      debugLog("Google:Puppeteer", "Detected CAPTCHA/Traffic block");
       throw new Error("Google CAPTCHA detected");
     }
 
     // Wait for results
     try {
-      console.log("DEBUG: Google (Puppeteer) - Waiting for selector div.g");
+      debugLog("Google:Puppeteer", "Waiting for selector div.g");
       await page.waitForSelector("div.g", { timeout: options.timeout || 10000 });
     } catch (e) {
-      console.log("DEBUG: Google (Puppeteer) - waitForSelector failed or timed out");
+      debugLog("Google:Puppeteer", "waitForSelector failed or timed out");
       // Take a screenshot or dump html if possible/needed?
       // For now just rethrow to let the outer catch handle it
       throw e;
@@ -198,8 +199,9 @@ async function searchWithPuppeteer(query: string, options: ScraperOptions): Prom
       return items;
     }, options.limit);
 
-    console.log(
-      `DEBUG: Google (Puppeteer) - Extracted ${results.length} items from ${await page.evaluate(() => document.querySelectorAll("div.g").length)} div.g elements`,
+    debugLog(
+      "Google:Puppeteer",
+      `Extracted ${results.length} items from ${await page.evaluate(() => document.querySelectorAll("div.g").length)} div.g elements`,
     );
 
     return results;
@@ -236,19 +238,19 @@ export async function searchGoogle(query: string, options: ScraperOptions = {}):
     // Try basic fetch first unless Puppeteer is forced or we are searching for images
     if (!mergedOptions.forcePuppeteer && mergedOptions.category !== "images") {
       try {
-        console.log("DEBUG: Google - Trying basic fetch");
+        debugLog("Google", "Trying basic fetch");
         const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
         await fetchWithDetection(searchUrl, mergedOptions);
 
         // If no bot detection, use library
-        console.log("DEBUG: Google - Basic fetch passed detection, using google-sr");
+        debugLog("Google", "Basic fetch passed detection, using google-sr");
         const results: OrganicResultNode[] = await googleSearch({
           query,
           parsers: [OrganicResult],
           noPartialResults: true,
           requestConfig: { queryParams: { safe: "active" } },
         });
-        console.log(`DEBUG: Google - google-sr returned ${results.length} results`);
+        debugLog("Google", `google-sr returned ${results.length} results`);
 
         const formattedResults = results.map((r) => ({
           title: r.title || "",
@@ -266,10 +268,10 @@ export async function searchGoogle(query: string, options: ScraperOptions = {}):
         return formattedResults;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.log(`DEBUG: Google - Basic fetch failed: ${errorMessage}`);
+        debugLog("Google", `Basic fetch failed: ${errorMessage}`);
         if (errorMessage === "Bot protection detected" && mergedOptions.antiBot?.enabled) {
           // Silent fallback
-          console.log("DEBUG: Google - Falling back to Puppeteer");
+          debugLog("Google", "Falling back to Puppeteer");
         } else {
           throw error;
         }
@@ -277,9 +279,9 @@ export async function searchGoogle(query: string, options: ScraperOptions = {}):
     }
 
     // Use Puppeteer as fallback
-    console.log("DEBUG: Google - Starting Puppeteer search");
+    debugLog("Google", "Starting Puppeteer search");
     const results = await searchWithPuppeteer(query, mergedOptions);
-    console.log(`DEBUG: Google - Puppeteer returned ${results.length} results`);
+    debugLog("Google", `Puppeteer returned ${results.length} results`);
 
     searchCache.set(cacheKey, {
       results,

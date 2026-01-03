@@ -1,5 +1,5 @@
 import { ScraperOptions, SearchResult, SearchError, ImageResult } from "../../types";
-import { fetchWithDetection, getCacheKey } from "../common";
+import { fetchWithDetection, getCacheKey, debugLog } from "../common";
 
 // Default public SearxNG instances
 const DEFAULT_INSTANCES = [
@@ -82,7 +82,7 @@ export async function searchSearxNG(query: string, options: ScraperOptions = {})
           searchUrl.searchParams.append("categories", "images");
         }
 
-        console.log(`DEBUG: SearxNG - Trying instance ${instance}`);
+        debugLog("SearxNG", `Trying instance ${instance}`);
         const { body } = await fetchWithDetection(searchUrl.toString(), mergedOptions);
 
         // Basic validation of JSON
@@ -132,11 +132,11 @@ export async function searchSearxNG(query: string, options: ScraperOptions = {})
           source: "searxng",
         });
 
-        console.log(`DEBUG: SearxNG - Success with ${instance}, found ${results.length} results`);
+        debugLog("SearxNG", `Success with ${instance}, found ${results.length} results`);
         return results;
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        console.log(`DEBUG: SearxNG - Instance ${instance} failed: ${msg}`);
+        debugLog("SearxNG", `Instance ${instance} failed: ${msg}`);
         lastError = error;
         // Continue to next instance
       }

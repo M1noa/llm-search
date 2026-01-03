@@ -6,6 +6,7 @@ import {
   createRealisticHeaders,
   getCacheKey,
   cleanText,
+  debugLog,
 } from "../common";
 import { JSDOM } from "jsdom";
 
@@ -198,10 +199,10 @@ async function searchWithPuppeteer(query: string, options: ScraperOptions): Prom
 
     // Wait for results
     try {
-      console.log("DEBUG: DuckDuckGo (Puppeteer) - Waiting for results (HTML version)");
+      debugLog("DuckDuckGo:Puppeteer", "Waiting for results (HTML version)");
       await page.waitForSelector(".result", { timeout: options.timeout || 10000 });
     } catch (e) {
-      console.log("DEBUG: DuckDuckGo (Puppeteer) - waitForSelector failed or timed out");
+      debugLog("DuckDuckGo:Puppeteer", "waitForSelector failed or timed out");
       throw e;
     }
 
@@ -218,19 +219,19 @@ async function searchWithPuppeteer(query: string, options: ScraperOptions): Prom
         const rawUrl = titleEl?.getAttribute("href");
 
         if (titleEl && rawUrl) {
-            // Helper to clean DDG redirect URLs if needed, though usually simple in HTML mode
-            // We'll return the raw one and let the post-processing handle it if needed
-            // But simple extraction is safer:
-            let url = rawUrl;
-            try {
-                const urlObj = new URL(rawUrl, "https://duckduckgo.com");
-                if (urlObj.pathname === "/l/") {
-                    const uddg = urlObj.searchParams.get("uddg");
-                    if (uddg) url = decodeURIComponent(uddg);
-                }
-            } catch (e) {
-                // ignore
+          // Helper to clean DDG redirect URLs if needed, though usually simple in HTML mode
+          // We'll return the raw one and let the post-processing handle it if needed
+          // But simple extraction is safer:
+          let url = rawUrl;
+          try {
+            const urlObj = new URL(rawUrl, "https://duckduckgo.com");
+            if (urlObj.pathname === "/l/") {
+              const uddg = urlObj.searchParams.get("uddg");
+              if (uddg) url = decodeURIComponent(uddg);
             }
+          } catch (e) {
+            // ignore
+          }
 
           items.push({
             title: titleEl.textContent?.trim() || "",
@@ -346,9 +347,9 @@ export async function searchDuckDuckGo(query: string, options: ScraperOptions = 
     }
 
     // Use Puppeteer as fallback
-    console.log("DEBUG: DuckDuckGo - Starting Puppeteer search");
+    debugLog("DuckDuckGo", "Starting Puppeteer search");
     const results = await searchWithPuppeteer(query, mergedOptions);
-    console.log(`DEBUG: DuckDuckGo - Puppeteer returned ${results.length} results`);
+    debugLog("DuckDuckGo", `Puppeteer returned ${results.length} results`);
 
     searchCache.set(cacheKey, {
       results,
