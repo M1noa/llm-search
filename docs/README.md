@@ -1,4 +1,4 @@
-# llm-search-tools Documentation
+# llm-search Documentation
 
 This documentation covers usage for both TypeScript and Node.js environments.
 
@@ -13,7 +13,7 @@ This documentation covers usage for both TypeScript and Node.js environments.
 ## Installation
 
 ```bash
-npm install llm-search-tools
+npm install llm-search
 ```
 
 ## TypeScript Usage
@@ -21,7 +21,7 @@ npm install llm-search-tools
 ### Basic Search
 
 ```typescript
-import { search, SearchResult } from "llm-search-tools";
+import { search, SearchResult } from "llm-search";
 
 async function searchExample() {
     try {
@@ -36,7 +36,7 @@ async function searchExample() {
 ### Wikipedia Search and Content
 
 ```typescript
-import { wikiSearch, wikiGetContent, WikipediaResult } from "llm-search-tools";
+import { wikiSearch, wikiGetContent, WikipediaResult } from "llm-search";
 
 async function wikiExample() {
     try {
@@ -57,7 +57,7 @@ import {
     getNewStories,
     getStoryById,
     HackerNewsResult,
-} from "llm-search-tools";
+} from "llm-search";
 
 async function hnExample() {
     try {
@@ -74,7 +74,7 @@ async function hnExample() {
 ### Webpage Content Extraction
 
 ```typescript
-import { getWebpageContent, WebpageContent } from "llm-search-tools";
+import { getWebpageContent, WebpageContent } from "llm-search";
 
 async function webpageExample() {
     try {
@@ -97,7 +97,7 @@ async function webpageExample() {
 ### Basic Search
 
 ```javascript
-const { search } = require("llm-search-tools");
+const { search } = require("llm-search");
 
 async function searchExample() {
     try {
@@ -112,7 +112,7 @@ async function searchExample() {
 ### Wikipedia Search and Content
 
 ```javascript
-const { wikiSearch, wikiGetContent } = require("llm-search-tools");
+const { wikiSearch, wikiGetContent } = require("llm-search");
 
 async function wikiExample() {
     try {
@@ -128,7 +128,7 @@ async function wikiExample() {
 ### HackerNews Integration
 
 ```javascript
-const { getTopStories, getNewStories, getStoryById } = require("llm-search-tools");
+const { getTopStories, getNewStories, getStoryById } = require("llm-search");
 
 async function hnExample() {
     try {
@@ -145,7 +145,7 @@ async function hnExample() {
 ### Webpage Content Extraction
 
 ```javascript
-const { getWebpageContent } = require("llm-search-tools");
+const { getWebpageContent } = require("llm-search");
 
 async function webpageExample() {
     try {
@@ -179,7 +179,7 @@ The scraper module provides intelligent web scraping with automatic bot detectio
 #### Basic Search with Bot Detection
 
 ```typescript
-import { search } from "llm-search-tools";
+import { search } from "llm-search";
 
 // Automatically handles bot protection
 const results = await search("typescript tutorial");
@@ -211,7 +211,7 @@ const results = await search("react tutorial", {
 #### Advanced Configuration
 
 ```typescript
-import { ProxyConfig, ScraperOptions } from "llm-search-tools";
+import { ProxyConfig, ScraperOptions } from "llm-search";
 
 const proxyConfig: ProxyConfig = {
     type: "socks5",

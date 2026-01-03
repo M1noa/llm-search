@@ -1,6 +1,6 @@
-# llm-search-tools 🔍
+# llm-search 🔍
 
-[![npm version](https://badge.fury.io/js/llm-search-tools.svg)](https://badge.fury.io/js/llm-search-tools)
+[![npm version](https://badge.fury.io/js/llm-search.svg)](https://badge.fury.io/js/llm-search)
 
 > A Node.js module for searching and scraping web content, designed for LLMs but useful for everyone!
 
@@ -26,7 +26,7 @@
 ## Installation
 
 ```bash
-npm install llm-search-tools
+npm install llm-search
 
 # Optional: Install OCR language data for non-English languages
 npm install tesseract.js-data
@@ -43,7 +43,7 @@ import {
   getQuote,
   getSuggestions,
   crawl,
-} from "llm-search-tools";
+} from "llm-search";
 
 // Web Search
 const results = await search("typescript tutorial");
@@ -125,7 +125,7 @@ See the [docs](./docs) directory for detailed documentation:
 ### Web Search
 
 ```typescript
-import { search } from "llm-search-tools";
+import { search } from "llm-search";
 
 const results = await search("typescript tutorial");
 console.log(results);
@@ -134,7 +134,7 @@ console.log(results);
 ### Media Search
 
 ```typescript
-import { searchMedia } from "llm-search-tools";
+import { searchMedia } from "llm-search";
 
 // Search for a movie
 const movies = await searchMedia("The Matrix", { type: "movie" });
@@ -148,7 +148,7 @@ console.log(anime);
 ### Autocomplete & Crawling
 
 ```typescript
-import { getSuggestions, crawl } from "llm-search-tools";
+import { getSuggestions, crawl } from "llm-search";
 
 // Get search suggestions
 const suggestions = await getSuggestions("best javascript framework");
@@ -165,7 +165,7 @@ console.log(`Crawled ${pages.length} pages`);
 ### Specialized Search
 
 ```typescript
-import { searchFlights, searchEvents } from "llm-search-tools";
+import { searchFlights, searchEvents } from "llm-search";
 
 // Find flights
 const flights = await searchFlights({
@@ -181,7 +181,7 @@ const events = await searchEvents("tech conferences in San Francisco");
 ### Document Parsing
 
 ```typescript
-import { parse } from "llm-search-tools";
+import { parse } from "llm-search";
 
 // Parse PDF
 const pdfResult = await parse("document.pdf");
@@ -217,7 +217,7 @@ try {
 }
 ```
 
-[![NPM Download Stats](https://nodei.co/npm/llm-search-tools.png?downloads=true)](https://www.npmjs.com/package/llm-search-tools)
+[![NPM Download Stats](https://nodei.co/npm/llm-search.png?downloads=true)](https://www.npmjs.com/package/llm-search)
 
 ## Dependencies
 

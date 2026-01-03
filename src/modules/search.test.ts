@@ -53,6 +53,8 @@ describe("Search Module", () => {
         setExtraHTTPHeaders: vi.fn(),
         goto: vi.fn(),
         waitForSelector: vi.fn(),
+        title: vi.fn().mockResolvedValue("Mock Title"),
+        content: vi.fn().mockResolvedValue("<html></html>"),
         evaluate: vi
           .fn()
           .mockResolvedValue([

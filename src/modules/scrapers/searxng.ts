@@ -63,40 +63,68 @@ export async function searchSearxNG(query: string, options: ScraperOptions = {})
       return cached.results;
     }
 
-    // Use provided instance or pick a random default
-    const instance =
-      mergedOptions.searxngInstance || DEFAULT_INSTANCES[Math.floor(Math.random() * DEFAULT_INSTANCES.length)];
+    // Use provided instance or try defaults with fallback
+    const instances = mergedOptions.searxngInstance
+      ? [mergedOptions.searxngInstance]
+      : DEFAULT_INSTANCES.sort(() => Math.random() - 0.5); // Shuffle defaults
 
-    // Construct URL with JSON format
-    const searchUrl = new URL(`${instance}/search`);
-    searchUrl.searchParams.append("q", query);
-    searchUrl.searchParams.append("format", "json");
-    searchUrl.searchParams.append("safesearch", mergedOptions.safeSearch ? "1" : "0");
+    let lastError: unknown;
 
-    if (mergedOptions.category === "images") {
-      searchUrl.searchParams.append("categories", "images");
-    }
+    for (const instance of instances) {
+      try {
+        // Construct URL with JSON format
+        const searchUrl = new URL(`${instance}/search`);
+        searchUrl.searchParams.append("q", query);
+        searchUrl.searchParams.append("format", "json");
+        searchUrl.searchParams.append("safesearch", mergedOptions.safeSearch ? "1" : "0");
 
-    try {
-      const { body } = await fetchWithDetection(searchUrl.toString(), mergedOptions);
-      const data = JSON.parse(body) as SearxNGResponse;
+        if (mergedOptions.category === "images") {
+          searchUrl.searchParams.append("categories", "images");
+        }
 
-      if (!data.results || !Array.isArray(data.results)) {
-        throw new Error("Invalid response format from SearxNG");
-      }
+        console.log(`DEBUG: SearxNG - Trying instance ${instance}`);
+        const { body } = await fetchWithDetection(searchUrl.toString(), mergedOptions);
 
-      if (mergedOptions.category === "images") {
-        const results: ImageResult[] = data.results
-          .slice(0, mergedOptions.limit)
-          .filter((r) => r.img_src || r.thumbnail_src || r.url.match(/\.(jpeg|jpg|gif|png)$/i))
-          .map((r) => ({
-            title: r.title,
-            url: r.url,
-            snippet: r.content || r.title,
-            imageUrl: r.img_src || r.url,
-            thumbnailUrl: r.thumbnail_src || r.thumbnail || r.img_src || r.url,
-            source: "searxng-images",
-          }));
+        // Basic validation of JSON
+        let data: SearxNGResponse;
+        try {
+          data = JSON.parse(body) as SearxNGResponse;
+        } catch (e) {
+          throw new Error(`Invalid JSON response from ${instance}`);
+        }
+
+        if (!data.results || !Array.isArray(data.results)) {
+          throw new Error(`Invalid response structure from ${instance}`);
+        }
+
+        if (mergedOptions.category === "images") {
+          const results: ImageResult[] = data.results
+            .slice(0, mergedOptions.limit)
+            .filter((r) => r.img_src || r.thumbnail_src || r.url.match(/\.(jpeg|jpg|gif|png)$/i))
+            .map((r) => ({
+              title: r.title,
+              url: r.url,
+              snippet: r.content || r.title,
+              imageUrl: r.img_src || r.url,
+              thumbnailUrl: r.thumbnail_src || r.thumbnail || r.img_src || r.url,
+              source: "searxng-images",
+            }));
+
+          searchCache.set(cacheKey, {
+            results,
+            timestamp: Date.now(),
+            source: "searxng",
+          });
+
+          return results;
+        }
+
+        const results: SearchResult[] = data.results.slice(0, mergedOptions.limit).map((r) => ({
+          title: r.title,
+          url: r.url,
+          snippet: r.content || "",
+          source: "searxng",
+        }));
 
         searchCache.set(cacheKey, {
           results,
@@ -104,32 +132,20 @@ export async function searchSearxNG(query: string, options: ScraperOptions = {})
           source: "searxng",
         });
 
+        console.log(`DEBUG: SearxNG - Success with ${instance}, found ${results.length} results`);
         return results;
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.log(`DEBUG: SearxNG - Instance ${instance} failed: ${msg}`);
+        lastError = error;
+        // Continue to next instance
       }
-
-      const results: SearchResult[] = data.results.slice(0, mergedOptions.limit).map((r) => ({
-        title: r.title,
-        url: r.url,
-        snippet: r.content || "",
-        source: "searxng",
-      }));
-
-      searchCache.set(cacheKey, {
-        results,
-        timestamp: Date.now(),
-        source: "searxng",
-      });
-
-      return results;
-    } catch (error) {
-      // If specific error, rethrow
-      if (error instanceof Error && error.message.includes("Bot protection")) {
-        throw error;
-      }
-      throw new Error(
-        `Failed to fetch from SearxNG instance ${instance}: ${error instanceof Error ? error.message : String(error)}`,
-      );
     }
+
+    // If we get here, all instances failed
+    throw new Error(
+      `All SearxNG instances failed. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+    );
   } catch (error) {
     throw {
       message: "searxng search failed",

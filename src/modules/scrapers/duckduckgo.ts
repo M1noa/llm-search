@@ -191,26 +191,51 @@ async function searchWithPuppeteer(query: string, options: ScraperOptions): Prom
       return results;
     }
 
-    const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
+    // Use HTML-only version for better reliability in headless mode
+    // The JS version often detects headless browsers and returns <noscript>
+    const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
     await page.goto(searchUrl, { waitUntil: "networkidle2" });
 
-    await page.waitForSelector("#links .result", { timeout: 10000 });
+    // Wait for results
+    try {
+      console.log("DEBUG: DuckDuckGo (Puppeteer) - Waiting for results (HTML version)");
+      await page.waitForSelector(".result", { timeout: options.timeout || 10000 });
+    } catch (e) {
+      console.log("DEBUG: DuckDuckGo (Puppeteer) - waitForSelector failed or timed out");
+      throw e;
+    }
 
     const results = await page.evaluate((limit) => {
       const items: SearchResult[] = [];
-      const elements = document.querySelectorAll("#links .result");
+      const elements = document.querySelectorAll(".result");
 
       for (let i = 0; i < Math.min(elements.length, limit || 10); i++) {
         const el = elements[i];
-        const titleEl = el.querySelector("h2");
-        const linkEl = el.querySelector("a");
-        const snippetEl = el.querySelector(".result__snippet");
 
-        if (titleEl && linkEl) {
+        const titleEl = el.querySelector(".result__title a");
+        const snippetEl = el.querySelector(".result__snippet");
+        // The URL is often in the title href, but sometimes redirected
+        const rawUrl = titleEl?.getAttribute("href");
+
+        if (titleEl && rawUrl) {
+            // Helper to clean DDG redirect URLs if needed, though usually simple in HTML mode
+            // We'll return the raw one and let the post-processing handle it if needed
+            // But simple extraction is safer:
+            let url = rawUrl;
+            try {
+                const urlObj = new URL(rawUrl, "https://duckduckgo.com");
+                if (urlObj.pathname === "/l/") {
+                    const uddg = urlObj.searchParams.get("uddg");
+                    if (uddg) url = decodeURIComponent(uddg);
+                }
+            } catch (e) {
+                // ignore
+            }
+
           items.push({
-            title: titleEl.textContent || "",
-            url: (linkEl as HTMLAnchorElement).href || "",
-            snippet: snippetEl?.textContent || "",
+            title: titleEl.textContent?.trim() || "",
+            url: url,
+            snippet: snippetEl?.textContent?.trim() || "",
             source: "duckduckgo",
           });
         }
@@ -321,7 +346,9 @@ export async function searchDuckDuckGo(query: string, options: ScraperOptions = 
     }
 
     // Use Puppeteer as fallback
+    console.log("DEBUG: DuckDuckGo - Starting Puppeteer search");
     const results = await searchWithPuppeteer(query, mergedOptions);
+    console.log(`DEBUG: DuckDuckGo - Puppeteer returned ${results.length} results`);
 
     searchCache.set(cacheKey, {
       results,

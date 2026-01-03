@@ -25,7 +25,7 @@ npm install pdf-parse mammoth csv-parse tesseract.js fast-xml-parser
 ### Basic Usage
 
 ```typescript
-import { parse } from "llm-search-tools";
+import { parse } from "llm-search";
 
 // parse a file by path (ez mode)
 const result = await parse("path/to/file.pdf");

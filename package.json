@@ -1,5 +1,5 @@
 {
-  "name": "llm-search-tools",
+  "name": "llm-search",
   "version": "1.1.0",
   "description": "A Node.js module for searching and scraping web content, designed for LLMs but useful for any project where webscraping is needed!",
   "main": "dist/index.js",
@@ -9,6 +9,7 @@
     "prepare": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:search": "ts-node src/scripts/run-search.ts",
     "lint": "eslint src/**/*.ts",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run test && npm run build"
